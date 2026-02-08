@@ -4,8 +4,8 @@ namespace Web4.Keyholes;
 
 public interface IRpcClient
 {
-    void SetText(byte[] key, ref Keyhole keyhole);
-    void SetText(byte[] key, Span<Keyhole> keyholes);
+    void SetValue(byte[] key, ref Keyhole keyhole);
+    void SetValue(byte[] key, Span<Keyhole> keyholes);
     void SetNode(Keyhole[] buffer, byte[] key, Span<Keyhole> keyholes, ValueTuple<string, int>? viewTransitionNameNew = null, ValueTuple<string, int>? viewTransitionNameOld = null);
     void SetNode(Keyhole[] buffer, byte[] key, Span<Keyhole> keyholes, ValueTuple<string, byte[]> viewTransitionName);
     void PushNode(Keyhole[] buffer, byte[] key, Span<Keyhole> keyholes, byte[] newKey);

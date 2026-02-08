@@ -148,7 +148,7 @@ public partial class JsonRpcWriter : IDisposable
         OnMessageEnd();
     }
 
-    // Called from SetText
+    // Called from SetValue
     public void WriteNotification(ValueTuple<string, byte[], string> method, ref Keyhole param1)
     {
         OnMessageBegin();
@@ -182,7 +182,7 @@ public partial class JsonRpcWriter : IDisposable
         OnMessageEnd();
     }
 
-    // Called from SetText
+    // Called from SetValue
     public void WriteNotification(ValueTuple<string, byte[], string> method, Span<Keyhole> param1)
     {
         OnMessageBegin();
