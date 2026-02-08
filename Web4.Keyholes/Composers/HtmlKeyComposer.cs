@@ -302,22 +302,30 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
         if (deferredLiteral != null)
             HandleDeferredLiteral();
 
-        if (includeEventArg)
+        if (!includeEventArg)
         {
-            // ex: `"keyholes['key'].dispatchEvent(event.trim('{format ?? "*"}'))" key:{Key}`
+            // ex: `"keyholes['1:2:3'].dispatchEvent(event)" key:1:2:3`
             Writer.Write("\"keyholes['"u8);
             Writer.Write(Key);
-            Writer.Write("'].dispatchEvent(event.trim('"u8);
-            Writer.Write(format ?? "*");
-            Writer.Write("'))\" key:"u8);
+            Writer.Write("'].dispatchEvent(event)\" key:"u8);
             Writer.Write(Key);
         }
-        else
+        else if (format is not null)
         {
-            // ex: `"keyholes['key'].dispatchEvent(event.trim(''))" key:{Key}`
+            // ex: `"keyholes['1:2:3'].dispatchEvent(event,'x,y'))" key:1:2:3`
             Writer.Write("\"keyholes['"u8);
             Writer.Write(Key);
-            Writer.Write("'].dispatchEvent(event.trim(''))\" key:"u8);
+            Writer.Write("'].dispatchEvent(event,'"u8);
+            Writer.Write(format);
+            Writer.Write("')\" key:"u8);
+            Writer.Write(Key);
+        }
+        else if (format is null)
+        {
+            // ex: `"keyholes['1:2:3'].dispatchEvent(event,'*'))" key:1:2:3`
+            Writer.Write("\"keyholes['"u8);
+            Writer.Write(Key);
+            Writer.Write("'].dispatchEvent(event,'*')\" key:"u8);
             Writer.Write(Key);
         }
         

@@ -267,13 +267,13 @@ public class WindowBuilder :
     public WindowBuilder AddEventListener(string type, Action<Event.Subsets.WidthHeight> listener) => AddEventListener(type, listener, Event.Subsets.WidthHeight.TRIM);
     public WindowBuilder AddEventListener(string type, Action<Event.Subsets.XY> listener) => AddEventListener(type, listener, Event.Subsets.XY.TRIM);
 
-    public WindowBuilder AddEventListener(string type, Action<Event>? listener, string? format = null)
-        => AddEventListenerInternal(type, listener, format, "window");
+    public WindowBuilder AddEventListener(string type, Action<Event>? listener, string? trim = null)
+        => AddEventListenerInternal(type, listener, trim, "window");
 
     internal WindowBuilder AddEventListenerInternal(
         string type, 
         Action<Event>? listener, 
-        string? format = null,
+        string? trim = null,
         string target = "window")
     {
         string? onNotation = null;
@@ -300,7 +300,7 @@ public class WindowBuilder :
 
             Listeners.Add(new(listener)
             {
-                Html = CreateListenerString(format, type, target, key, options),
+                Html = CreateListenerString(trim, type, target, key, options),
                 OnNotation = onNotation,
             });
         }
@@ -311,12 +311,12 @@ public class WindowBuilder :
     private string CreateListenerString(string? format, string type, string target, string key, string options) => format switch
     {
         // Serialize nothing – the event object is never used
-        "" => $"{target}.addEventListener('{type}', e => keyholes['{key}'].dispatchEvent(e.trim('')), {options}); keyholes.set('{key}', {target});",
+        "" => $"{target}.addEventListener('{type}', e => keyholes['{key}'].dispatchEvent(e), {options}); keyholes.set('{key}', {target});",
 
         // Serialize the event – the event object is needed
-        null => $"{target}.addEventListener('{type}', e => keyholes['{key}'].dispatchEvent(e.trim('*')), {options}); keyholes.set('{key}', {target});",
+        null => $"{target}.addEventListener('{type}', e => keyholes['{key}'].dispatchEvent(e, '*'), {options}); keyholes.set('{key}', {target});",
 
         // Serialize selectively – only a few properties are ever used
-        _ => $"{target}.addEventListener('{type}', e => keyholes['{key}'].dispatchEvent(e.trim('{format}')), {options}); keyholes.set('{key}', {target});",
+        _ => $"{target}.addEventListener('{type}', e => keyholes['{key}'].dispatchEvent(e, '{format}'), {options}); keyholes.set('{key}', {target});",
     };
 }

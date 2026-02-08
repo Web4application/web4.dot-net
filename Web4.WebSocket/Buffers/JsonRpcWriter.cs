@@ -379,9 +379,18 @@ public partial class JsonRpcWriter : IDisposable
                 case KeyholeType.EventListener:
                     jsonWriter.WriteStringValueSegment("\"keyholes['", false);
                     WriteKey(keyhole.Key);
-                    jsonWriter.WriteStringValueSegment("'].dispatchEvent(event.trim('", false);
-                    jsonWriter.WriteStringValueSegment(keyhole.TrimModifier ?? "*", false);
-                    jsonWriter.WriteStringValueSegment("'))\" key:", false);
+                    switch (keyhole.TrimModifier)
+                    {
+                        case "":
+                            jsonWriter.WriteStringValueSegment("'].dispatchEvent(event)\" key:", false);
+                            break;
+                        case null:
+                        default:
+                            jsonWriter.WriteStringValueSegment("'].dispatchEvent(event,'", false);
+                            jsonWriter.WriteStringValueSegment(keyhole.TrimModifier ?? "*", false);
+                            jsonWriter.WriteStringValueSegment("')\" key:", false);
+                            break;
+                    }
                     WriteKey(keyhole.Key);
                     break;
                 case KeyholeType.Iterator:
