@@ -104,7 +104,6 @@ public class SnapshotKeyComposer : BaseKeyComposer
         keyhole.SetValue(value);
         keyhole.Type = type;
         keyhole.FormatModifier = format;
-        keyhole.IsValueAnAttribute = isWritingAttribute;
 
         Cursor = index + 1;
         return true;

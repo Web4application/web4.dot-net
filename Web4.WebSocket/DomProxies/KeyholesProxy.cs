@@ -20,18 +20,10 @@ public partial class Bridge : IRpcClient, IRpcServer, IKeyholes
         );
     }
 
-    public void SetAttribute(byte[] key, ref Keyhole keyhole)
+    public void SetText(byte[] key, Span<Keyhole> keyholes)
     {
         JsonRpc.WriteNotification(
-            method: ("keyholes['", key, "'].setAttribute"),
-            param1: ref keyhole
-        );
-    }
-
-    public void SetAttribute(byte[] key, Span<Keyhole> keyholes)
-    {
-        JsonRpc.WriteNotification(
-            method: ("keyholes['", key, "'].setAttribute"),
+            method: ("keyholes['", key, "'].setText"),
             param1: keyholes
         );
     }

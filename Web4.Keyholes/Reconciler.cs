@@ -37,7 +37,7 @@ public ref struct Reconciler(IRpcClient mutator, Keyhole[] oldBuffer, Keyhole[] 
         if (oldSpan.Length != newSpan.Length)
         {
             if (newParent.Type == KeyholeType.Attribute)
-                mutator.SetAttribute(
+                mutator.SetText(
                     newParent.Key,
                     newSpan
                 );
@@ -94,7 +94,7 @@ public ref struct Reconciler(IRpcClient mutator, Keyhole[] oldBuffer, Keyhole[] 
             if (!Object.ReferenceEquals(oldKeyhole.StringLiteral, newKeyhole.StringLiteral))
             {
                 if (newParent.Type == KeyholeType.Attribute)
-                    mutator.SetAttribute(
+                    mutator.SetText(
                         newParent.Key,
                         newSpan
                     );
@@ -182,15 +182,11 @@ public ref struct Reconciler(IRpcClient mutator, Keyhole[] oldBuffer, Keyhole[] 
                 // This keyhole's value is part of a sequence of keyholes that comprises this attribute.
                 // Find the start of this sequence, then grab the sequence's full span.
                 ref var startKeyhole = ref newBuffer[newParent.SequenceStart];
-                mutator.SetAttribute(newParent.Key, newBuffer.AsSpan(startKeyhole.Sequence));
+                mutator.SetText(newParent.Key, newBuffer.AsSpan(startKeyhole.Sequence));
 
                 // Shortcircuit.  No need to diff the rest of this span.
                 // This whole attribute sequence will be updated.
                 return true;
-            }
-            else if (newKeyhole.IsValueAnAttribute)
-            {
-                mutator.SetAttribute(newKeyhole.Key, ref newKeyhole);
             }
             else
             {

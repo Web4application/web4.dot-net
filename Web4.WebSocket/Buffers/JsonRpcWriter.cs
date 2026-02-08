@@ -148,7 +148,7 @@ public partial class JsonRpcWriter : IDisposable
         OnMessageEnd();
     }
 
-    // Called from SetText and SetAttribute
+    // Called from SetText
     public void WriteNotification(ValueTuple<string, byte[], string> method, ref Keyhole param1)
     {
         OnMessageBegin();
@@ -163,7 +163,7 @@ public partial class JsonRpcWriter : IDisposable
 
         jsonWriter.WriteStartArray("params");
 
-        if (method.Item3 == ".setAttribute" && param1.Type == KeyholeType.Boolean)
+        if (param1.Type == KeyholeType.Boolean)
         {
             // HTML treats boolean attributes differently.  Send without quotes.
             jsonWriter.WriteBooleanValue(param1.Boolean);
@@ -182,7 +182,7 @@ public partial class JsonRpcWriter : IDisposable
         OnMessageEnd();
     }
 
-    // Called from SetAttribute
+    // Called from SetText
     public void WriteNotification(ValueTuple<string, byte[], string> method, Span<Keyhole> param1)
     {
         OnMessageBegin();

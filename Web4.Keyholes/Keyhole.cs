@@ -63,7 +63,6 @@ public struct Keyhole
     // Like the properties that use value1, they aim to conserve memory width in keyhole 
     // buffers by reusing one backing field across a number of properties that are only 
     // used depending on the keyhole type.
-    public bool IsValueAnAttribute { get => value2 == -1; set => value2 = value ? -1 : 0; }
     public int RelativeOrder { get => value2; set => value2 = value; }
 
     public static bool Equals(ref Keyhole left, ref Keyhole right)

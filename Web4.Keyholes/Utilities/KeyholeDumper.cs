@@ -52,8 +52,7 @@ public ref struct KeyholeDumper(IConsole Console, Keyhole[] buffer)
                 Console.GroupEnd();
                 break;
             case KeyholeType.Integer:
-                // TODO: keyhole.IsValueAnAttribute isn't getting set?
-                if (keyhole.IsValueAnAttribute || isParentAnAttribute)
+                if (isParentAnAttribute)
                     Console.GroupCollapsed($"{$"[{index}]",-4}  {$"%ckey:{key} %c: %c{keyhole.Type}",-28} %c{keyhole.Integer}", CSS_VARIABLE, CSS_OPERATOR, CSS_TYPE, CSS_NUMBER);
                 else
                     Console.GroupCollapsed($"{$"[{index}]",-4}  {$"%ckey:{key} %c: %c{keyhole.Type}",-28} %o", CSS_VARIABLE, CSS_OPERATOR, CSS_TYPE, ObjectString(key));
@@ -64,7 +63,7 @@ public ref struct KeyholeDumper(IConsole Console, Keyhole[] buffer)
                 Console.GroupEnd();
                 break;
             case KeyholeType.Color:
-                if (keyhole.IsValueAnAttribute || isParentAnAttribute)
+                if (isParentAnAttribute)
                     Console.GroupCollapsed($"{$"[{index}]",-4}  {$"%ckey:{key} %c: %c{keyhole.Type}",-28} %c◼ %c#{keyhole.Color.ToRgb():x6}", CSS_VARIABLE, CSS_OPERATOR, CSS_TYPE, $"color:#{keyhole.Color.ToRgb():x6}", CSS_DEFAULT);
                 else
                     Console.GroupCollapsed($"{$"[{index}]",-4}  {$"%ckey:{key} %c: %c{keyhole.Type}",-28} %c◼ %o", CSS_VARIABLE, CSS_OPERATOR, CSS_TYPE, $"color:#{keyhole.Color.ToRgb():x6}", ObjectString(key));
