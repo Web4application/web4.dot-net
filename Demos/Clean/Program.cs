@@ -119,7 +119,7 @@ app.MapWeb4("/swiftui", () => $"""
     """);
 
 var window = app.MapWeb4("/app", () => $"""
-    <!doctype app>
+    <!doctype html>
     <html>
         <head>
             <title>Neato</title>
