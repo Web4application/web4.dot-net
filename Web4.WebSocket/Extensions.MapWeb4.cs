@@ -45,12 +45,6 @@ public static partial class Extensions
             }
         });
 
-        group.Map("/web4/alive", async httpContext =>
-        {
-            if (httpContext.WebSockets.IsWebSocketRequest)
-                await httpContext.WebSockets.AcceptWebSocketAsync();
-        });
-
         if (!applicationBuilder.Properties.TryGetValue("IS_WEB4_MAPPED", out var isWeb4Mapped))
         {
             applicationBuilder.Properties["IS_WEB4_MAPPED"] = true;
@@ -67,6 +61,11 @@ public static partial class Extensions
                 context.Response.ContentType = "text/css";
                 context.Response.ContentLength = AssetsHelper.WEB4_CSS.Length;
                 context.Response.BodyWriter.Write(AssetsHelper.WEB4_CSS);
+            });
+            app.Map("/_web4/alive", async httpContext =>
+            {
+                if (httpContext.WebSockets.IsWebSocketRequest)
+                    await httpContext.WebSockets.AcceptWebSocketAsync();
             });
         }
 
