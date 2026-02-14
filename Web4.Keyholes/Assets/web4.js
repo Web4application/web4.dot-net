@@ -180,7 +180,7 @@ class Web4Keyhole {
 }
 
 class WebSocketBridge {
-  #webSocket = new WebSocket(`${location.pathname === '/' ? '' : location.pathname}/web4`);
+  #webSocket = new WebSocket(`${location.pathname === '/' ? '' : location.pathname}web4`);
   #messageID = 0;
   #reconnectionAttempts = 0;
   #promises = new Map();
@@ -347,7 +347,7 @@ class WebSocketBridge {
         if (this.#reconnectionAttempts == 0) {
           while (++this.#reconnectionAttempts <= 10) {
             console.debug(`Web4 reconnect: (attempt ${this.#reconnectionAttempts} of 10)...`);
-            new WebSocket(`${location.pathname}/web4/alive`)
+            new WebSocket(`${location.pathname}web4/alive`)
               .onopen = e => location.reload();
             await new Promise(resolve => setTimeout(resolve, 1000));
           }

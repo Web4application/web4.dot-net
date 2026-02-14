@@ -14,7 +14,7 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
     private enum AttributeStatus { None, Pending, InProgress }
     private AttributeStatus attributeStatus = AttributeStatus.None;
     private ReadOnlyMemory<char>? deferredLiteral = null;
-    private bool isBodyOmitted = false;
+    private bool isHeadOmitted = false;
 
     public IBufferWriter<byte> Writer { get; set; } = writer;
     public WindowBuilder Window { get; set; } = window;
@@ -28,11 +28,11 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
 
     public override bool OnTemplateEnd(ref Html html)
     {
-        if (isBodyOmitted)
+        if (isHeadOmitted)
         {
             Writer.Write("""
                     
-                    </body>
+                </body>
                 </html>
                 """u8);
         }
@@ -367,33 +367,33 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
         return attributeName;
     }
 
-    private static readonly byte[] KERNEL = 
-        Encoding.UTF8.GetBytes(new StreamReader(System.Reflection.Assembly
-            .GetExecutingAssembly()
-            .GetManifestResourceStream("Web4.Keyholes.Kernel.html")!
-        ).ReadToEnd());
-
     private void InjectKernel(ref string literal)
     {
-        Writer.Write("""
+        int headEnd = literal.IndexOf("</head>", StringComparison.Ordinal);
+        isHeadOmitted = headEnd < 0;
+        if (isHeadOmitted)
+        {
+            Writer.Write("""
             <!doctype html>
             <html>
             <head>
-            
-            """u8);
 
-        // Write dev-included <head> content (if any)
-        int headStart = literal.IndexOf("<head>", StringComparison.Ordinal);
-        if (headStart >= 0)
+            """u8);
+        }
+        else
         {
-            headStart += 6; // "<head>".Length;
-            int headEnd = literal.IndexOf("</head>", headStart, StringComparison.Ordinal);
-            if (headEnd > headStart)
-                Writer.Write(literal.AsSpan(headStart..headEnd));
+            Writer.Write(literal.AsSpan(..headEnd));
         }
 
-        // Write necesary JavaScript and CSS to operate Web4
-        Writer.Write(KERNEL);
+        Writer.Write("""
+
+                <!-- Injected by Web4 -->
+                <script src="/_web4/web4.js" defer></script>
+                <link href="/_web4/web4.css" rel="stylesheet" />
+                <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+                <meta charset="UTF-8">
+
+            """u8);
 
         // Write event handlers set on window or document
         if (Window.Listeners.Count > 0)
@@ -411,22 +411,29 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
             Writer.Write("</script>\n\n"u8);
         }
 
-        // Locate the start of the <body> tag (if present)
-        int bodyStart = literal.IndexOf("<body", Math.Max(headStart, 0), StringComparison.Ordinal);
-        this.isBodyOmitted = bodyStart < 0;
-        Writer.Write(isBodyOmitted ? "\n</head><body>\n"u8 : "\n</head>\n"u8);
-
-        // Pre-handle the work of OnMarkup, except consider `offset`.
-        // Then set `literal` to "" so the next OnMarkup no-ops.
-        int offset = isBodyOmitted ? 0 : bodyStart;
-        if (literal.EndsWith('='))
+        if (isHeadOmitted)
         {
-            attributeStatus = AttributeStatus.Pending;
-            deferredLiteral = literal.AsMemory(offset);
+            Writer.Write("""
+
+            </head>
+            <body>
+
+            """u8);
         }
         else
         {
-            Writer.Write(literal.AsSpan(offset));
+            // Pre-handle the work of OnMarkup, except consider `offset`.
+            // Then set `literal` to "" so the next OnMarkup no-ops.
+            int offset = isHeadOmitted ? 0 : headEnd;
+            if (literal.EndsWith('='))
+            {
+                attributeStatus = AttributeStatus.Pending;
+                deferredLiteral = literal.AsMemory(offset);
+            }
+            else
+            {
+                Writer.Write(literal.AsSpan(offset));
+            }
         }
 
         literal = string.Empty;

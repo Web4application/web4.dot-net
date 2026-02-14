@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.IO.Pipelines;
 using MicroHtml;
 using MicroHtml.Composers;
+using Web4.Keyholes.Assets;
 
 namespace Web4.WebSocket;
 
@@ -19,7 +20,7 @@ public static partial class Extensions
         [StringSyntax("Route")] string pattern,
         Func<Html> template)
     {
-        app.UseWebSockets();
+        var applicationBuilder = app.UseWebSockets();
         var group = app.MapGroup(pattern);
         var window = new WindowBuilder(group, template);
 
@@ -49,6 +50,25 @@ public static partial class Extensions
             if (httpContext.WebSockets.IsWebSocketRequest)
                 await httpContext.WebSockets.AcceptWebSocketAsync();
         });
+
+        if (!applicationBuilder.Properties.TryGetValue("IS_WEB4_MAPPED", out var isWeb4Mapped))
+        {
+            applicationBuilder.Properties["IS_WEB4_MAPPED"] = true;
+
+            // TODO: Support gz and br
+            app.Map("/_web4/web4.js", (HttpContext context) =>
+            {
+                context.Response.ContentType = "text/javascript";
+                context.Response.ContentLength = AssetsHelper.WEB4_JS.Length;
+                context.Response.BodyWriter.Write(AssetsHelper.WEB4_JS);
+            });
+            app.Map("/_web4/web4.css", (HttpContext context) =>
+            {
+                context.Response.ContentType = "text/css";
+                context.Response.ContentLength = AssetsHelper.WEB4_CSS.Length;
+                context.Response.BodyWriter.Write(AssetsHelper.WEB4_CSS);
+            });
+        }
 
         return window;
     }
