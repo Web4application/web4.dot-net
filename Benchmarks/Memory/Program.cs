@@ -32,15 +32,17 @@ public class Tests
     public void Basic_String()
     {
         NoOpString noOpString = $"""
-        <html>
-            <body>
-                Hello {name}
-                <button>
-                    Clicks: {c}
-                </button>
-            </body>
-        </html>
-        """;
+            <html>
+                <head>
+                </head>
+                <body>
+                    Hello {name}
+                    <button>
+                        Clicks: {c}
+                    </button>
+                </body>
+            </html>
+            """;
     }
 
     [Benchmark]
@@ -48,6 +50,8 @@ public class Tests
     {
         noOpComposer.Compose($"""
             <html>
+                <head>
+                </head>
                 <body>
                     Hello {name}
                     <button>
@@ -63,12 +67,14 @@ public class Tests
     {
         noOpWriter.Write($"""
             <html>
-                <body>
-                    Hello {name}
-                    <button>
-                        Clicks: {c}
-                    </button>
-                </body>
+            <head>
+            </head>
+            <body>
+                Hello {name}
+                <button>
+                    Clicks: {c}
+                </button>
+            </body>
             </html>
             """);
     }
@@ -78,6 +84,8 @@ public class Tests
     {
         pipe.Writer.Write($"""
             <html>
+                <head>
+                </head>
                 <body>
                     Hello {name}
                     <button>
@@ -99,6 +107,8 @@ public class Tests
         xtmlComposer.Window = window;
         noOpWriter.Write(xtmlComposer, $"""
             <html>
+                <head>
+                </head>
                 <body>
                     Hello {name}
                     <button>
@@ -116,6 +126,8 @@ public class Tests
         xtmlComposer.Window = window;
         pipe.Writer.Write(xtmlComposer, $"""
             <html>
+                <head>
+                </head>
                 <body>
                     Hello {name}
                     <button>
@@ -373,9 +385,8 @@ public class Tests
             <html lang="en">
                 <head>
                     <meta charset="utf-8" />
-                    <link rel="icon" href="{web4Assets}/favicon.png" />
+                    <link rel="icon" href="/favicon.png" />
                     <meta name="viewport" content="width=device-width, initial-scale=1" />
-                    {web4Head}
                 </head>
                 <body data-sveltekit-preload-data="hover">
                     <div style="display: contents">{GuidTableBody()}</div>
@@ -431,9 +442,8 @@ public class Tests
             <html lang="en">
                 <head>
                     <meta charset="utf-8" />
-                    <link rel="icon" href="{web4Assets}/favicon.png" />
+                    <link rel="icon" href="/favicon.png" />
                     <meta name="viewport" content="width=device-width, initial-scale=1" />
-                    {web4Head}
                 </head>
                 <body data-sveltekit-preload-data="hover">
                     <div style="display: contents">{GuidTableBody()}</div>
@@ -469,6 +479,8 @@ public class Tests
     {
         snapshotComposer.Capture(keyholeBuffer, () => $"""
             <html>
+                <head>
+                </head>
                 <body>
                     <button>
                         Clicks: {i}
@@ -483,6 +495,8 @@ public class Tests
     {
         var snapshot = snapshotComposer.Capture(keyholeBuffer, () => $"""
             <html>
+                <head>
+                </head>
                 <body>
                     <button>
                         Clicks: {l}
@@ -497,6 +511,8 @@ public class Tests
     {
         var snapshot = snapshotComposer.Capture(keyholeBuffer, () => $"""
             <html>
+                <head>
+                </head>
                 <body>
                     <button>
                         Clicks: {f}
@@ -511,6 +527,8 @@ public class Tests
     {
         var snapshot = snapshotComposer.Capture(keyholeBuffer, () => $"""
             <html>
+                <head>
+                </head>
                 <body>
                     <button>
                         Clicks: {d}
@@ -525,6 +543,8 @@ public class Tests
     {
         var snapshot = snapshotComposer.Capture(keyholeBuffer, () => $"""
             <html>
+                <head>
+                </head>
                 <body>
                     <button>
                         Clicks: {m}
@@ -539,6 +559,8 @@ public class Tests
     {
         var snapshot = snapshotComposer.Capture(keyholeBuffer, () => $"""
             <html>
+                <head>
+                </head>
                 <body>
                     <button>
                         Clicks: {dt}
@@ -553,6 +575,8 @@ public class Tests
     {
         var snapshot = snapshotComposer.Capture(keyholeBuffer, () => $"""
             <html>
+                <head>
+                </head>
                 <body>
                     <button>
                         Clicks: {d0}
@@ -567,6 +591,8 @@ public class Tests
     {
         var snapshot = snapshotComposer.Capture(keyholeBuffer, () => $"""
             <html>
+                <head>
+                </head>
                 <body>
                     <button>
                         Clicks: {ts}
@@ -581,6 +607,8 @@ public class Tests
     {
         var snapshot = snapshotComposer.Capture(keyholeBuffer, () => $"""
             <html>
+                <head>
+                </head>
                 <body>
                     <button>
                         Clicks: {t0}
@@ -595,6 +623,8 @@ public class Tests
     {
         var snapshot = snapshotComposer.Capture(keyholeBuffer, () => $"""
             <html>
+                <head>
+                </head>
                 <body>
                     <button>
                         Clicks: {b}
@@ -609,6 +639,8 @@ public class Tests
     {
         var snapshot = snapshotComposer.Capture(keyholeBuffer, () => $"""
             <html>
+                <head>
+                </head>
                 <body>
                     <button>
                         Clicks: {color}
@@ -623,6 +655,8 @@ public class Tests
     {
         var snapshot = snapshotComposer.Capture(keyholeBuffer, () => $"""
             <html>
+                <head>
+                </head>
                 <body>
                     <button>
                         Clicks: {str}
@@ -637,6 +671,8 @@ public class Tests
     {
         var snapshot = snapshotComposer.Capture(keyholeBuffer, () => $"""
             <html>
+                <head>
+                </head>
                 <body>
                     <button>
                         Clicks: {uri}
@@ -651,6 +687,8 @@ public class Tests
     {
         var snapshot = snapshotComposer.Capture(keyholeBuffer, () => $"""
             <html>
+                <head>
+                </head>
                 <body>
                     <button>
                         Clicks: {c:c}
