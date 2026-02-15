@@ -5,6 +5,8 @@ global using Web4.Dom;
 global using Web4.Xtml;
 global using System.Buffers;
 using System.Drawing;
+using MicroHtml.Composers;
+using System.Text;
 Action<string> Log = Console.WriteLine;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -491,7 +493,7 @@ byte[] bufN = System.Text.Encoding.UTF8.GetBytes(strN);
 // 5.8M
 app.MapGet("/min", () => "Hello world");
 
-// 6.5M
+// 7.0M
 app.MapGet("/str", context =>
 {
     context.Response.ContentLength = contentLength;
@@ -502,7 +504,7 @@ app.MapGet("/str", context =>
     return Task.CompletedTask;
 });
 
-// 7.1M
+// 7.5M
 app.MapGet("/asy", async context =>
 {
     context.Response.ContentLength = contentLength;
@@ -527,7 +529,7 @@ app.MapGet("/syn", context =>
     return Task.CompletedTask;
 });
 
-// 8.3M
+// 7.8M
 app.MapGet("/mem", async context =>
 {
     context.Response.ContentLength = contentLength;
@@ -539,6 +541,26 @@ app.MapGet("/mem", async context =>
     }
 });
 
+// 7.8M
+byte[] hw = Encoding.UTF8.GetBytes("Hello world");
+ReadOnlyMemory<byte> hw2 = new(hw);
+app.MapGet("/co0", async context =>
+{
+    context.Response.ContentLength = 11;
+
+    var pipeWriter = context.Response.BodyWriter;
+    await pipeWriter.WriteAsync(hw2);
+});
+
+// 7.8M
+app.MapGet("/co1", async context =>
+{
+    context.Response.ContentLength = 11;
+    var pipeWriter = context.Response.BodyWriter;
+    await pipeWriter.WriteAsync(hw);
+});
+
+// 4.7M
 app.MapGet("/spn", async context =>
 {
     context.Response.ContentLength = contentLength;
@@ -552,16 +574,15 @@ app.MapGet("/spn", async context =>
     // return Task.CompletedTask;
 });
 
+// 4.7M
 app.MapGet("/sp2", context =>
 {
-    ReadOnlySpan<byte> s = memN.Span;
-
     context.Response.ContentLength = contentLength;
 
     var pipeWriter = context.Response.BodyWriter;
     for (int i = 0; i < writeCount; i++)
     {
-        pipeWriter.Write(s);
+        pipeWriter.Write(bufN.AsSpan());
     }
     return Task.CompletedTask;
 });
@@ -583,6 +604,7 @@ app.MapGet("/ros", context =>
     return Task.CompletedTask;
 });
 
+// 7.7M
 app.MapGet("/wat", async context =>
 {
     context.Response.ContentLength = contentLength;
