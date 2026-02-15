@@ -15,6 +15,14 @@ namespace Web4.WebSocket;
 
 public static partial class Extensions
 {
+    /// <summary>
+    /// Adds a RouteEndpoint for the specified pattern that establishes a 
+    /// Web4 connection enabling the handling of events and manipulation of the DOM.
+    /// </summary>
+    /// <param name="app">The <see cref="WebApplication"/> to add the route to.</param>
+    /// <param name="pattern">The route pattern.</param>
+    /// <param name="template">The delegate executed when the endpoint is matched.</param>
+    /// <returns>A <see cref="WindowBuilder"/> that can be used to listen to events or further customize the endpoint.</returns>
     public static WindowBuilder MapWindow(
         this WebApplication app,
         [StringSyntax("Route")] string pattern,
