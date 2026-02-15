@@ -15,7 +15,7 @@ namespace Web4.WebSocket;
 
 public static partial class Extensions
 {
-    public static WindowBuilder MapWeb4(
+    public static WindowBuilder MapWindow(
         this WebApplication app,
         [StringSyntax("Route")] string pattern,
         Func<Html> template)

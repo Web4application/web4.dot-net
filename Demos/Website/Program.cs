@@ -71,7 +71,7 @@ void SomeInstanceMethod()
     Console.WriteLine("I am a method");
 }
 
-var window = app.MapWeb4("/x02", () => $"""
+var window = app.MapWindow("/x02", () => $"""
     <!doctype html>
     <html>
         <body>
@@ -95,7 +95,7 @@ window.AddEventListener("click", e =>
 
 
 
-app.MapWeb4("/x01", () => $"""
+app.MapWindow("/x01", () => $"""
     <!doctype html>
     <html>
         <body>
@@ -298,7 +298,7 @@ DateOnly dO = DateOnly.FromDateTime(DateTime.Now);
 TimeOnly tO = TimeOnly.FromDateTime(DateTime.Now);
 Color color = Color.Red;
 Uri u = new("http://Itcanbeanything");
-app.MapWeb4("/signatures", () => $"""
+app.MapWindow("/signatures", () => $"""
     <!doctype html>
     <html>
         <body>
