@@ -274,10 +274,11 @@ static void OnClick(Event.Mouse e)
 // window.Document.AddEventListener("click", e => Console.WriteLine($"doc6: document.onclick: {e.X}"));
 // window.AddEventListener("mousemove", e => c = (int)e.X);
 
-window.MapGet("/about", ctx =>
+window.MapGet("/about", window =>
 {
     name = "Reset";
     c = 0;
+    window.Console.Log($"Navigated to /about.  name:{name}, c:{c}");
 });
 
 app.Run();

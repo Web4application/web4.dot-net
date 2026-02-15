@@ -50,7 +50,7 @@ public class WindowBuilder :
 
     public WindowBuilder MapGet(
         [StringSyntax("Route")] string pattern, 
-        Action<HttpContext> requestDelegate)
+        Action<IWindow> requestDelegate)
     {
         routeGroupBuilder?.Map(
             pattern,
