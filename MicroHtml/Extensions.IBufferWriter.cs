@@ -86,26 +86,6 @@ public static partial class Extensions
     {
         html.Dispose();
     }
-
-    public static ValueTask<FlushResult> WriteAsync(
-        this PipeWriter writer, // This one defaults to HtmlComposer (see Html constructor below)
-        [InterpolatedStringHandlerArgument("writer")] ref Html html,
-        CancellationToken cancel = default)
-    {
-        html.Dispose();
-        return writer.FlushAsync(cancel);
-    }
-
-    public static ValueTask<FlushResult> WriteAsync<T>(
-        this PipeWriter writer,
-        T composer, // This one lets you supply your own composer.
-        [InterpolatedStringHandlerArgument("composer")] ref Html html,
-        CancellationToken cancel = default)
-            where T : BaseComposer, IStreamingComposer
-    {
-        html.Dispose();
-        return writer.FlushAsync(cancel);
-    }
 }
 
 public ref partial struct Html
