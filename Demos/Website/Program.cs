@@ -506,6 +506,12 @@ app.MapGet("/mem", async context =>
     }
 });
 
+// 4.2M
+app.MapGet("/ff0", () => $"Hello world");
+
+// 7.4M
+app.MapGet("/ff1", () => $"Hello world");
+
 // 7.8M
 byte[] hw = Encoding.UTF8.GetBytes("Hello world");
 ReadOnlyMemory<byte> hw2 = new(hw);
