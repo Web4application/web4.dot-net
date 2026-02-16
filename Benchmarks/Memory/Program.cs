@@ -373,8 +373,6 @@ public class Tests
 
 
 
-    static readonly string web4Assets = ".";
-    static readonly string web4Head = "";
     static EntryRecord[] entries;
     
     [Benchmark]
