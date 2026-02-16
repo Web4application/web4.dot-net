@@ -15,9 +15,7 @@ public static partial class Extensions
     {
         return endpoints.Map(pattern, async httpContext =>
         {
-            // var pipeWriter = httpContext.Response.BodyWriter;
-            // pipeWriter.Write($"{template()}");
-            // await pipeWriter.FlushAsync(httpContext.RequestAborted);
+            // httpContext.Response.BodyWriter.Write($"{template()}");
 
             await HttpResponseComposer
                 .Reuse(httpContext.Response)
