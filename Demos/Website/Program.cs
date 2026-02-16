@@ -196,15 +196,6 @@ app.MapWindow("/x01", () => $"""
 //     c++;
 // });
 
-            <p size={max:c}>{ctx.Connection.Id}</p>
-
-            <input type="checkbox" checked={isSelected} />
-            <input type="checkbox" {(isSelected ? "checked" : "")} />
-        </body>
-    </html>
-    """
-);
-
 Html JustAMethod(string name) => $"""
     <div>
         <p>I am just a method, {name}</p>
