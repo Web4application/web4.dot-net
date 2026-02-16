@@ -30,7 +30,7 @@ public static partial class Extensions
     {
         var applicationBuilder = app.UseWebSockets();
         var group = app.MapGroup(pattern);
-        var window = new WindowBuilder(group, template);
+        var window = new WindowBuilder(template);
 
         group.Map("/", async httpContext =>
         {

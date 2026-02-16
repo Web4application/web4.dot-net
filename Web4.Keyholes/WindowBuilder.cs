@@ -1,8 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 using Web4.Dom.EventListeners;
 using Web4.Keyholes.Composers;
 using Web4.Dom;
@@ -29,8 +26,6 @@ public class WindowBuilder :
     ITouchEventListeners,
     ITransitionEventListeners
 {
-    private readonly RouteGroupBuilder? routeGroupBuilder;
-
     public Func<Html> Template { get; init; }
     public DocumentBuilder Document { get; init; }
     public List<EventListener> Listeners { get; } = [];
@@ -41,26 +36,11 @@ public class WindowBuilder :
         Document = new(this);
     }
 
-    public WindowBuilder(RouteGroupBuilder routeGroupBuilder, Func<Html> template)
-    {
-        this.routeGroupBuilder = routeGroupBuilder;
-        Template = template;
-        Document = new(this);
-    }
-
     public WindowBuilder MapGet(
         [StringSyntax("Route")] string pattern, 
         Action<IWindow> requestDelegate)
     {
-        routeGroupBuilder?.Map(
-            pattern,
-            async context => 
-            {
-                // TODO: Implement
-                await Task.Delay(1);
-            }
-        );
-
+        // TODO: Implement
         return this;
     }
 
