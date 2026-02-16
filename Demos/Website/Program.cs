@@ -34,7 +34,7 @@ var max=3.14;
 
 app.MapGet("/hi1", () => "Hello world");
 app.MapGet("/hi2", () => $"Hello world");
-app.MapGet("/hi3", ctx => $"Hello world");
+// app.MapGet("/hi3", ctx => $"Hello world");
 
 app.MapGet("/hi", () => $"""
     <html>
@@ -195,32 +195,6 @@ app.MapWindow("/x01", () => $"""
 // {
 //     c++;
 // });
-
-
-
-app.MapGet("/ctx", ctx => $"""
-    <!doctype html>
-    <html>
-        <body>
-            Hello world {c}
-
-            {JustAMethod(name: name)}
-
-            <button onclick={e => c++}>
-                Clicks: {c}
-            </button>
-
-            <button onclick={OnClick}>
-                Clicks: {c}
-            </button>
-
-            <button onclick={() => c++}>
-                Clicks: {c}
-            </button>
-
-            <button style={$"background-color: {bg}; color: {fg};"}>
-                Clicks: {c}
-            </button>
 
             <p size={max:c}>{ctx.Connection.Id}</p>
 

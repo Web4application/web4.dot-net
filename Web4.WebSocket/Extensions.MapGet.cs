@@ -24,19 +24,4 @@ public static partial class Extensions
             await pipeWriter.FlushAsync(httpContext.RequestAborted);
         });
     }
-
-    public static IEndpointConventionBuilder MapGet(
-        this IEndpointRouteBuilder endpoints,
-        [StringSyntax("Route")] string pattern,
-        Func<HttpContext, Html> template)
-    {
-        return endpoints.Map(pattern, async httpContext =>
-        {
-            // TODO: Optimization: set ContentLength if Html's formattedCount is zero.
-
-            var pipeWriter = httpContext.Response.BodyWriter;
-            pipeWriter.Write($"{template(httpContext)}");
-            await pipeWriter.FlushAsync(httpContext.RequestAborted);
-        });
-    }
 }

@@ -49,7 +49,7 @@ entries = [.. Enumerable
 
 
 
-app.MapGet("/spiral", ctx => $$"""
+app.MapGet("/spiral", () => $$"""
   <!DOCTYPE html>
   <html>
     <head>
@@ -86,7 +86,7 @@ app.MapGet("/spiral", ctx => $$"""
   </html>
   """);
 
-app.MapGet("/guids", ctx => $"""
+app.MapGet("/guids", () => $"""
   <!doctype html>
   <html lang="en">
       <head>
