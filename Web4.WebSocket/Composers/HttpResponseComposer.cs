@@ -8,13 +8,13 @@ namespace Web4.Keyholes.Composers;
 public class HttpResponseComposer(HttpResponse httpResponse) : HtmlComposer(httpResponse.BodyWriter)
 {
     private HttpResponse _httpResponse = httpResponse;
-    private string? _oneShotOptimization = null;
+    private string? _fullBody = null;
 
     public override bool OnMarkup(ref Html parent, ref string literal, int relativeOrder = -1)
     {
         if (LiteralLength > 0 && KeyholeCount <= 1)
         {
-            _oneShotOptimization = literal;
+            _fullBody = literal;
             return true;
         }
         
@@ -23,15 +23,15 @@ public class HttpResponseComposer(HttpResponse httpResponse) : HtmlComposer(http
 
     public Task WriteAsync([InterpolatedStringHandlerArgument("")] ref Html html)
     {
-        var oneShot = _oneShotOptimization;
-        var response = _httpResponse;
+        var fullBody = _fullBody;
+        var httpResponse = _httpResponse;
 
         html.Dispose();
 
-        if (oneShot != null)
+        if (fullBody != null)
         {
-            response.ContentLength = oneShot.Length;
-            return response.WriteAsync(oneShot, response.HttpContext.RequestAborted);
+            httpResponse.ContentLength = fullBody.Length;
+            return httpResponse.WriteAsync(fullBody, httpResponse.HttpContext.RequestAborted);
         }
 
         return Task.CompletedTask;
@@ -40,7 +40,7 @@ public class HttpResponseComposer(HttpResponse httpResponse) : HtmlComposer(http
     public override void Reset()
     {
         _httpResponse = null!;
-        _oneShotOptimization = null;
+        _fullBody = null;
         base.Reset();
     }
 
