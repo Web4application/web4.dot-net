@@ -12,9 +12,9 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
     : BaseKeyComposer, IStreamingComposer
 {
     private enum AttributeStatus { None, Pending, InProgress }
-    private AttributeStatus attributeStatus = AttributeStatus.None;
-    private ReadOnlyMemory<char>? deferredLiteral = null;
-    private bool isHeadOmitted = false;
+    private AttributeStatus _attributeStatus = AttributeStatus.None;
+    private ReadOnlyMemory<char>? _deferredLiteral = null;
+    private bool _isHeadOmitted = false;
 
     public IBufferWriter<byte> Writer { get; set; } = writer;
     public WindowBuilder Window { get; set; } = window;
@@ -28,7 +28,7 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
 
     public override bool OnTemplateEnd(ref Html html)
     {
-        if (isHeadOmitted)
+        if (_isHeadOmitted)
         {
             Writer.Write("""
                     
@@ -50,8 +50,8 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
         // https://developer.mozilla.org/en-US/docs/Glossary/Boolean/HTML
         if (literal.EndsWith('='))
         {
-            attributeStatus = AttributeStatus.Pending;
-            deferredLiteral = literal.AsMemory();
+            _attributeStatus = AttributeStatus.Pending;
+            _deferredLiteral = literal.AsMemory();
             return true;
         }
 
@@ -64,7 +64,7 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
     {
         base.OnStringKeyhole(ref parent, value);
 
-        switch (attributeStatus)
+        switch (_attributeStatus)
         {
             case AttributeStatus.None:
                 // ex: `<!--key:{Key}-->{value}<!--/key:{Key}-->`
@@ -82,7 +82,7 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
                 Writer.Write(Key);
                 // status jumps from .Pending to .None because the whole 
                 // attribute is just one value, not a bunch of keyholes+literals.
-                attributeStatus = AttributeStatus.None;
+                _attributeStatus = AttributeStatus.None;
                 break;
 
             case AttributeStatus.InProgress:
@@ -99,7 +99,7 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
     {
         base.OnBoolKeyhole(ref parent, value);
 
-        switch (attributeStatus)
+        switch (_attributeStatus)
         {
             case AttributeStatus.None:
                 // ex: `<!--key:{Key}-->{b}<!--/key:{Key}-->`
@@ -125,7 +125,7 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
 
                 // status jumps from .Pending to .None because the whole 
                 // attribute is just one value, not a bunch of keyholes+literals.
-                attributeStatus = AttributeStatus.None;
+                _attributeStatus = AttributeStatus.None;
                 break;
 
             case AttributeStatus.InProgress:
@@ -157,7 +157,7 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
 
         base.OnKeyhole(ref parent);
 
-        switch (attributeStatus)
+        switch (_attributeStatus)
         {
             case AttributeStatus.None:
                 // ex: `<!--key:{Key}-->{value:format}<!--/key:{Key}-->`
@@ -175,7 +175,7 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
                 Writer.Write(Key);
                 // status jumps from .Pending to .None because the whole 
                 // attribute is just one value, not a bunch of keyholes+literals.
-                attributeStatus = AttributeStatus.None;
+                _attributeStatus = AttributeStatus.None;
                 break;
 
             case AttributeStatus.InProgress:
@@ -192,7 +192,7 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
     {
         base.OnColorKeyhole(ref parent, value, format);
 
-        switch (attributeStatus)
+        switch (_attributeStatus)
         {
             case AttributeStatus.None:
                 // ex: `<!--key:{Key}-->{value:format}<!--/key:{Key}-->`
@@ -210,7 +210,7 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
                 Writer.Write(Key);
                 // status jumps from .Pending to .None because the whole 
                 // attribute is just one value, not a bunch of keyholes+literals.
-                attributeStatus = AttributeStatus.None;
+                _attributeStatus = AttributeStatus.None;
                 break;
 
             case AttributeStatus.InProgress:
@@ -230,7 +230,7 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
     {
         base.OnHtmlBegin(ref html, relativeOrder);
 
-        switch (attributeStatus)
+        switch (_attributeStatus)
         {
             case AttributeStatus.None:
                 // ex: `<!--key:{Key}-->`
@@ -240,7 +240,7 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
                 HandleDeferredLiteral();
                 // ex: `"` (the value will come later in the next On*Keyhole())
                 Writer.Write("\""u8);
-                attributeStatus = AttributeStatus.InProgress;
+                _attributeStatus = AttributeStatus.InProgress;
                 break;
         }
 
@@ -251,7 +251,7 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
     {
         base.OnHtmlEnd(ref parent, html, relativeOrder, transition, expression);
 
-        switch (attributeStatus)
+        switch (_attributeStatus)
         {
             case AttributeStatus.None:
                 // ex: `<!--/key:{Key}-->`
@@ -264,7 +264,7 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
                 // ex: `" key:{Key}`
                 Writer.Write("\" key:"u8);
                 Writer.Write(Key);
-                attributeStatus = AttributeStatus.None;
+                _attributeStatus = AttributeStatus.None;
                 break;
 
             case AttributeStatus.Pending:
@@ -299,7 +299,7 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
     {
         base.OnKeyhole(ref parent);
 
-        if (deferredLiteral != null)
+        if (_deferredLiteral != null)
             HandleDeferredLiteral();
 
         if (!includeEventArg)
@@ -329,17 +329,17 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
             Writer.Write(Key);
         }
         
-        attributeStatus = AttributeStatus.None;
+        _attributeStatus = AttributeStatus.None;
         return true;
     }
 
     private void HandleDeferredLiteral()
     {
-        if (!deferredLiteral.HasValue)
-            throw new NullReferenceException(nameof(deferredLiteral));
+        if (!_deferredLiteral.HasValue)
+            throw new NullReferenceException(nameof(_deferredLiteral));
 
-        Writer.Write(deferredLiteral.Value);
-        deferredLiteral = null;
+        Writer.Write(_deferredLiteral.Value);
+        _deferredLiteral = null;
     }
 
     private ReadOnlySpan<char> HandleDeferredLiteral(bool isBooleanAttribute = true)
@@ -350,12 +350,12 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
             return [];
         }
 
-        if (!deferredLiteral.HasValue)
-            throw new NullReferenceException(nameof(deferredLiteral));
+        if (!_deferredLiteral.HasValue)
+            throw new NullReferenceException(nameof(_deferredLiteral));
 
         // This string literal will look something like `...<input type="checkbox" checked=`
         // Note: We know they always end with `=`.
-        var deferredLiteralSpan = deferredLiteral.Value.Span;
+        var deferredLiteralSpan = _deferredLiteral.Value.Span;
         int indexBeforeAttribute = deferredLiteralSpan.LastIndexOf(' ');
         ArgumentOutOfRangeException.ThrowIfLessThan(indexBeforeAttribute, 0);
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(indexBeforeAttribute, deferredLiteralSpan.Length - 2);
@@ -363,15 +363,15 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
         Writer.Write(deferredLiteralSpan[..indexBeforeAttribute]);
         var attributeName = deferredLiteralSpan[(indexBeforeAttribute + 1)..^1];
 
-        deferredLiteral = null;
+        _deferredLiteral = null;
         return attributeName;
     }
 
     private void InjectKernel(ref string literal)
     {
         int headEnd = literal.IndexOf("</head>", StringComparison.Ordinal);
-        isHeadOmitted = headEnd < 0;
-        if (isHeadOmitted)
+        _isHeadOmitted = headEnd < 0;
+        if (_isHeadOmitted)
         {
             Writer.Write("""
             <!doctype html>
@@ -411,7 +411,7 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
             Writer.Write("</script>\n\n"u8);
         }
 
-        if (isHeadOmitted)
+        if (_isHeadOmitted)
         {
             Writer.Write("""
 
@@ -424,11 +424,11 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
         {
             // Pre-handle the work of OnMarkup, except consider `offset`.
             // Then set `literal` to "" so the next OnMarkup no-ops.
-            int offset = isHeadOmitted ? 0 : headEnd;
+            int offset = _isHeadOmitted ? 0 : headEnd;
             if (literal.EndsWith('='))
             {
-                attributeStatus = AttributeStatus.Pending;
-                deferredLiteral = literal.AsMemory(offset);
+                _attributeStatus = AttributeStatus.Pending;
+                _deferredLiteral = literal.AsMemory(offset);
             }
             else
             {
@@ -459,7 +459,7 @@ public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
     {
         Writer = null!;
         Window = null!;
-        attributeStatus = AttributeStatus.None;
+        _attributeStatus = AttributeStatus.None;
         base.Reset();
     }
 

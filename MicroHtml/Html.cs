@@ -12,8 +12,8 @@ public enum HtmlType { Default, Template, Wrapper }
 [StructLayout(LayoutKind.Auto)]
 public ref partial struct Html : IDisposable
 {
-    [ThreadStatic] static BaseComposer? scopedComposer;
-    private readonly BaseComposer composer;
+    [ThreadStatic] static BaseComposer? _scopedComposer;
+    private readonly BaseComposer _composer;
 
     public int FormattedCount { get; private set; }
     public HtmlType Type { get; set; }
@@ -28,7 +28,7 @@ public ref partial struct Html : IDisposable
     public Html(int literalLength, int formattedCount, BaseComposer composer)
         : this(composer, literalLength, formattedCount)
     {
-        scopedComposer = composer;
+        _scopedComposer = composer;
     }
 
     /// <summary>
@@ -40,7 +40,7 @@ public ref partial struct Html : IDisposable
     /// It's relies on ThreadStatic to find its composer (which was established by the root Html).
     /// </summary>
     public Html(int literalLength, int formattedCount, [CallerLineNumber] int relativeOrder = 0)
-        : this(scopedComposer ?? throw new NotSupportedException($"This thread's root Html must provide its own composer."), literalLength, formattedCount)
+        : this(_scopedComposer ?? throw new NotSupportedException($"This thread's root Html must provide its own composer."), literalLength, formattedCount)
     {
     }
 
@@ -52,14 +52,14 @@ public ref partial struct Html : IDisposable
     /// This constructor is for inline Html.  It gets its composer from the parent Html.
     /// </summary>
     public Html(int literalLength, int formattedCount, Html parentHtml, out bool @continue, [CallerLineNumber] int relativeOrder = 0)
-        : this(parentHtml.composer, literalLength, formattedCount)
+        : this(parentHtml._composer, literalLength, formattedCount)
     {
         @continue = true;
     }
 
     private Html(BaseComposer composer, int literalLength, int formattedCount)
     {
-        this.composer = composer;
+        _composer = composer;
         FormattedCount = formattedCount;
         Type = (literalLength, composer.LiteralLength) switch {
             (0, 0) => HtmlType.Wrapper,
@@ -78,7 +78,7 @@ public ref partial struct Html : IDisposable
     {
         FormattedCount = iteratorCount;
         Type = HtmlType.Default;
-        this.composer = composer;
+        _composer = composer;
         // composer.Grow(0, iteratorCount);
     }
 
@@ -87,49 +87,49 @@ public ref partial struct Html : IDisposable
     // Ex (opening): <div id="something"><figure class="bg-slate-100 rounded-xl p-8 dark:bg-slate-800">
     // or (closing): </div></div></div></div></div></div></div>
     public bool AppendLiteral(string literal, [CallerLineNumber] int relativeOrder = 0)
-        => composer.OnMarkup(ref this, ref literal, relativeOrder);
+        => _composer.OnMarkup(ref this, ref literal, relativeOrder);
 
 
     // MUTABLE VALUES
     // Ex: <p>Hello { name }, you have { count } clicks at { DateTime.Now }</p>
     public bool AppendFormatted(string value)
-        => composer.OnStringKeyhole(ref this, value);
+        => _composer.OnStringKeyhole(ref this, value);
 
     public bool AppendFormatted(bool value)
-        => composer.OnBoolKeyhole(ref this, value);
+        => _composer.OnBoolKeyhole(ref this, value);
 
     public bool AppendFormatted(int value, string? format = null)
-        => composer.OnIntKeyhole(ref this, value, format);
+        => _composer.OnIntKeyhole(ref this, value, format);
 
     public bool AppendFormatted(long value, string? format = null)
-        => composer.OnLongKeyhole(ref this, value, format);
+        => _composer.OnLongKeyhole(ref this, value, format);
     
     public bool AppendFormatted(float value, string? format = null)
-        => composer.OnFloatKeyhole(ref this, value, format);
+        => _composer.OnFloatKeyhole(ref this, value, format);
     
     public bool AppendFormatted(double value, string? format = null)
-        => composer.OnDoubleKeyhole(ref this, value, format);
+        => _composer.OnDoubleKeyhole(ref this, value, format);
     
     public bool AppendFormatted(decimal value, string? format = null)
-        => composer.OnDecimalKeyhole(ref this, value, format);
+        => _composer.OnDecimalKeyhole(ref this, value, format);
     
     public bool AppendFormatted(DateTime value, string? format = null)
-        => composer.OnDateTimeKeyhole(ref this, value, format);
+        => _composer.OnDateTimeKeyhole(ref this, value, format);
     
     public bool AppendFormatted(DateOnly value, string? format = null)
-        => composer.OnDateOnlyKeyhole(ref this, value, format);
+        => _composer.OnDateOnlyKeyhole(ref this, value, format);
     
     public bool AppendFormatted(TimeSpan value, string? format = null)
-        => composer.OnTimeSpanKeyhole(ref this, value, format);
+        => _composer.OnTimeSpanKeyhole(ref this, value, format);
     
     public bool AppendFormatted(TimeOnly value, string? format = null)
-        => composer.OnTimeOnlyKeyhole(ref this, value, format);
+        => _composer.OnTimeOnlyKeyhole(ref this, value, format);
     
     public bool AppendFormatted(Color value, string? format = null)
-        => composer.OnColorKeyhole(ref this, value, format);
+        => _composer.OnColorKeyhole(ref this, value, format);
 
     public bool AppendFormatted(Uri value, string? format = null)
-        => composer.OnUriKeyhole(ref this, value, format);
+        => _composer.OnUriKeyhole(ref this, value, format);
 
 
     // EVENT HANDLERS
@@ -139,26 +139,26 @@ public ref partial struct Html : IDisposable
     public bool AppendFormatted(Action listener, string? format = null, [CallerArgumentExpression(nameof(listener))] string? expression = null)
         => AppendEventListener(listener, format, expression);
     private bool AppendEventListener(Action listener, string? format = null, [CallerArgumentExpression(nameof(listener))] string? expression = null)
-        => composer.OnListener(ref this, listener, format, expression);
+        => _composer.OnListener(ref this, listener, format, expression);
 
     // Ex: <button onclick={ Increment }>Clicks: { c }</button>
     // Ex: <button onclick={ (Event e) => Increment(e) }>Clicks: { c }</button>
     public bool AppendFormatted(Action<Event> listener, string? format = null, [CallerArgumentExpression(nameof(listener))] string? expression = null)
         => AppendEventListener(listener, format, expression);
     private bool AppendEventListener(Action<Event> listener, string? format = null, [CallerArgumentExpression(nameof(listener))] string? expression = null)
-        => composer.OnListener(ref this, listener, format, expression);
+        => _composer.OnListener(ref this, listener, format, expression);
 
     // Ex: <button onclick={ IncrementAsync }>Clicks: { c }</button>
     public bool AppendFormatted(Func<Task> listener, string? format = null, [CallerArgumentExpression(nameof(listener))] string? expression = null)
         => AppendEventListener(listener, format, expression);
     private bool AppendEventListener(Func<Task> listener, string? format = null, [CallerArgumentExpression(nameof(listener))] string? expression = null)
-        => composer.OnListener(ref this, listener, format, expression);
+        => _composer.OnListener(ref this, listener, format, expression);
 
     // Ex: <button onclick={ IncrementFromEventAsync }>Clicks: { c }</button>
     public bool AppendFormatted(Func<Event, Task> listener, string? format = null, [CallerArgumentExpression(nameof(listener))] string? expression = null)
         => AppendEventListener(listener, format, expression);
     private bool AppendEventListener(Func<Event, Task> listener, string? format = null, [CallerArgumentExpression(nameof(listener))] string? expression = null)
-        => composer.OnListener(ref this, listener, format, expression);
+        => _composer.OnListener(ref this, listener, format, expression);
 
 
     // MUTABLE NODES
@@ -173,7 +173,7 @@ public ref partial struct Html : IDisposable
         // Possible point of confusion: 
         // By this line, the `scoped Html html` has already set its own keyholes.
 
-        return composer.OnHtmlKeyhole(ref this, html, alignment, format, expression);
+        return _composer.OnHtmlKeyhole(ref this, html, alignment, format, expression);
     }
 
     // EX: { names.Select(n => new MyComponent(name: n)) }
@@ -182,13 +182,13 @@ public ref partial struct Html : IDisposable
         string? format = null, 
         [CallerArgumentExpression(nameof(enumerable))] string? expression = null)
     {
-        var htmls = new Html(composer, enumerable.Count);
-        return composer.OnIteratorKeyhole(ref this, ref htmls, enumerable, format, expression);
+        var htmls = new Html(_composer, enumerable.Count);
+        return _composer.OnIteratorKeyhole(ref this, ref htmls, enumerable, format, expression);
     }
 
     public readonly void Dispose()
     {
-        scopedComposer?.Reset();
-        scopedComposer = null;
+        _scopedComposer?.Reset();
+        _scopedComposer = null;
     }
 }

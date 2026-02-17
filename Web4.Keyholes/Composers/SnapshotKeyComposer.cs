@@ -9,35 +9,35 @@ namespace Web4.Keyholes.Composers;
 public class SnapshotKeyComposer : BaseKeyComposer
 {
     // TODO: Don't forget to implement the high watermark logic.
-    private static int highWaterMark = 2048;
-    [ThreadStatic] static SnapshotKeyComposer? reusable;
-    public static SnapshotKeyComposer Shared => reusable ??= new SnapshotKeyComposer();
+    private static int _highWaterMark = 2048;
+    [ThreadStatic] static SnapshotKeyComposer? _reusable;
+    public static SnapshotKeyComposer Shared => _reusable ??= new SnapshotKeyComposer();
 
-    private Keyhole[] buffer = [];
-    private bool isWritingAttribute = false;
-    private int writeHead = 0;
-    private readonly List<int> cursors = [0];
+    private Keyhole[] _buffer = [];
+    private bool _isWritingAttribute = false;
+    private int _writeHead = 0;
+    private readonly List<int> _cursors = [0];
     private int Cursor
     {
-        get => cursors[keyCursor.CurrentDepth];
+        get => _cursors[_keyCursor.CurrentDepth];
         set
         {
-            if (cursors.Count == keyCursor.CurrentDepth)
-                cursors.Add(value);
+            if (_cursors.Count == _keyCursor.CurrentDepth)
+                _cursors.Add(value);
             else
-                cursors[keyCursor.CurrentDepth] = value;
+                _cursors[_keyCursor.CurrentDepth] = value;
         }
     }
 
     public Keyhole[] Capture(Func<Html> template)
     {
-        buffer = ArrayPool<Keyhole>.Shared.Rent(highWaterMark);
+        _buffer = ArrayPool<Keyhole>.Shared.Rent(_highWaterMark);
         return Interpolate($"{template()}");
     }
     
     public Keyhole[] Capture(Keyhole[] buffer, Func<Html> template)
     {
-        this.buffer = buffer;
+        _buffer = buffer;
         return Interpolate($"{template()}");
     }
 
@@ -47,7 +47,7 @@ public class SnapshotKeyComposer : BaseKeyComposer
         // By the time you've reached this line, the templating work has already completed.
         
         // Hang onto the result before html.Dispose() resets this class.
-        var result = buffer;
+        var result = _buffer;
 
         // html.Dispose() calls composer.Reset() which sets snapshot to [].
         html.Dispose();
@@ -60,7 +60,7 @@ public class SnapshotKeyComposer : BaseKeyComposer
     {
         base.OnTemplateBegin(ref html, ref markup);
         Cursor = 0;
-        writeHead += html.FormattedCount * 2 + 2;
+        _writeHead += html.FormattedCount * 2 + 2;
         return true;
     }
 
@@ -69,12 +69,12 @@ public class SnapshotKeyComposer : BaseKeyComposer
         base.OnMarkup(ref parent, ref literal, relativeOrder);
 
         int index = Cursor;
-        ref var keyhole = ref buffer[index];
+        ref var keyhole = ref _buffer[index];
         keyhole.String = literal;
         keyhole.Type = KeyholeType.StringLiteral;
         keyhole.SequenceStart = index;
         keyhole.SequenceLength = parent.FormattedCount * 2 + 1;
-        isWritingAttribute = literal.EndsWith('=');
+        _isWritingAttribute = literal.EndsWith('=');
        
         Cursor = index + 1;
         return true;
@@ -99,7 +99,7 @@ public class SnapshotKeyComposer : BaseKeyComposer
         base.OnKeyhole(ref parent);
 
         int index = Cursor;
-        ref var keyhole = ref buffer[index];
+        ref var keyhole = ref _buffer[index];
         keyhole.Key = Key;
         keyhole.SetValue(value);
         keyhole.Type = type;
@@ -115,29 +115,29 @@ public class SnapshotKeyComposer : BaseKeyComposer
         int index = Cursor;
         base.OnHtmlBegin(ref html, relativeOrder);
 
-        ref var keyhole = ref buffer[index];
+        ref var keyhole = ref _buffer[index];
         keyhole.Key = Key;
-        keyhole.SequenceStart = writeHead;
+        keyhole.SequenceStart = _writeHead;
         keyhole.SequenceLength = html.FormattedCount * 2 + 1;
-        keyhole.Type = isWritingAttribute ? KeyholeType.Attribute : KeyholeType.Html;
+        keyhole.Type = _isWritingAttribute ? KeyholeType.Attribute : KeyholeType.Html;
         keyhole.RelativeOrder = relativeOrder;
 
-        Cursor = writeHead;
-        writeHead += html.FormattedCount * 2 + 2;
+        Cursor = _writeHead;
+        _writeHead += html.FormattedCount * 2 + 2;
         return true;
     }
 
     public override bool OnHtmlEnd(ref Html parent, scoped Html html, int relativeOrder = -1, string? transition = null, string? expression = null)
     {
         // Prevent bleeding
-        ref var tail = ref buffer[Cursor];
+        ref var tail = ref _buffer[Cursor];
         tail.String = string.Empty;
         tail.Type = KeyholeType.StringLiteral;
 
         base.OnHtmlEnd(ref parent, html, relativeOrder, transition, expression);
 
         int index = Cursor;
-        ref var keyhole = ref buffer[index];
+        ref var keyhole = ref _buffer[index];
         keyhole.TransitionModifier = transition;
         keyhole.Expression = expression;
         if (relativeOrder >= 0)
@@ -153,16 +153,16 @@ public class SnapshotKeyComposer : BaseKeyComposer
         int index = Cursor;
         base.OnIteratorBegin(ref parent, ref htmls, transition, expression);
 
-        ref var keyhole = ref buffer[index];
+        ref var keyhole = ref _buffer[index];
         keyhole.Key = Key;
         keyhole.Type = KeyholeType.Iterator;
         keyhole.TransitionModifier = transition;
         keyhole.Expression = expression;
-        keyhole.SequenceStart = writeHead;
+        keyhole.SequenceStart = _writeHead;
         keyhole.SequenceLength = htmls.FormattedCount * 2 + 1;
 
-        Cursor = writeHead;
-        writeHead += htmls.FormattedCount * 2 + 2;
+        Cursor = _writeHead;
+        _writeHead += htmls.FormattedCount * 2 + 2;
         return true;
     }
 
@@ -177,7 +177,7 @@ public class SnapshotKeyComposer : BaseKeyComposer
             var html = selector(item);
             htmls.AppendFormatted(html);
 
-            buffer[Cursor - 1].Tag = item; // TODO: Memory allocation?
+            _buffer[Cursor - 1].Tag = item; // TODO: Memory allocation?
         }
 
         OnIteratorEnd(ref parent, ref htmls, transition, expression);
@@ -187,7 +187,7 @@ public class SnapshotKeyComposer : BaseKeyComposer
     public override bool OnIteratorEnd(ref Html parent, ref Html htmls, string? transition = null, string? expression = null)
     {
         // Prevent bleeding
-        ref var keyhole = ref buffer[Cursor];
+        ref var keyhole = ref _buffer[Cursor];
         keyhole.String = string.Empty;
         keyhole.Type = KeyholeType.StringLiteral;
 
@@ -207,7 +207,7 @@ public class SnapshotKeyComposer : BaseKeyComposer
         base.OnKeyhole(ref parent);
 
         int index = Cursor;
-        ref var keyhole = ref buffer[index];
+        ref var keyhole = ref _buffer[index];
         keyhole.Key = Key;
         keyhole.Type = KeyholeType.EventListener;
         keyhole.TrimModifier = format;
@@ -219,9 +219,9 @@ public class SnapshotKeyComposer : BaseKeyComposer
 
     public override void Reset()
     {
-        buffer = [];
-        writeHead = 0;
-        cursors[0] = 0;
+        _buffer = [];
+        _writeHead = 0;
+        _cursors[0] = 0;
         base.Reset();
     }
 
@@ -231,7 +231,7 @@ public class SnapshotKeyComposer : BaseKeyComposer
         int index = Cursor;
         if (index % 2 == 0)
         {
-            ref var keyhole = ref buffer[index];
+            ref var keyhole = ref _buffer[index];
             keyhole.String = string.Empty;
             keyhole.Type = KeyholeType.StringLiteral;        
             Cursor = index + 1;

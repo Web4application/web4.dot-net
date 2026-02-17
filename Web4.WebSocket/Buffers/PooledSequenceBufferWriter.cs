@@ -5,10 +5,10 @@ namespace Web4.WebSocket.Buffers;
 public class PooledSequenceBufferWriter<T> : IBufferWriter<T>
 {
     private const int DEFAULT_BUFFER_SIZE = 16384;
-    private T[]? currentBuffer;
-    private int currentIndex;
-    private SequenceSegment<T>? segmentStart;
-    private SequenceSegment<T>? segmentEnd;
+    private T[]? _currentBuffer;
+    private int _currentIndex;
+    private SequenceSegment<T>? _segmentStart;
+    private SequenceSegment<T>? _segmentEnd;
 
     public ReadOnlySequence<T> Sequence
     {
@@ -17,13 +17,13 @@ public class PooledSequenceBufferWriter<T> : IBufferWriter<T>
             var sequence = this switch
             {
                 // Never written to
-                _ when currentBuffer is null => ReadOnlySequence<T>.Empty,
+                _ when _currentBuffer is null => ReadOnlySequence<T>.Empty,
 
                 // Single-segment
-                _ when segmentEnd is null => new ReadOnlySequence<T>(currentBuffer, 0, currentIndex),
+                _ when _segmentEnd is null => new ReadOnlySequence<T>(_currentBuffer, 0, _currentIndex),
 
                 // Multi-segment
-                _ => new ReadOnlySequence<T>(segmentStart!, 0, segmentEnd.Append(currentBuffer!, 0..currentIndex), currentIndex)
+                _ => new ReadOnlySequence<T>(_segmentStart!, 0, _segmentEnd.Append(_currentBuffer!, 0.._currentIndex), _currentIndex)
             };
 
             Reset();
@@ -36,33 +36,33 @@ public class PooledSequenceBufferWriter<T> : IBufferWriter<T>
     private void Reset()
     {
         WrittenCount = 0;
-        currentBuffer = null;
-        currentIndex = 0;
-        segmentStart = null;
-        segmentEnd = null;
+        _currentBuffer = null;
+        _currentIndex = 0;
+        _segmentStart = null;
+        _segmentEnd = null;
     }
 
     public void Advance(int count)
     {
-        currentIndex += count;
+        _currentIndex += count;
         WrittenCount += count;
     }
 
     public Memory<T> GetMemory(int sizeHint = 0)
     {
         GrowIfNeeded(sizeHint);
-        return currentBuffer.AsMemory(currentIndex);
+        return _currentBuffer.AsMemory(_currentIndex);
     }
 
     public Span<T> GetSpan(int sizeHint = 0)
     {
         GrowIfNeeded(sizeHint);
-        return currentBuffer.AsSpan(currentIndex);
+        return _currentBuffer.AsSpan(_currentIndex);
     }
 
     private void GrowIfNeeded(int sizeHint)
     {
-        var unusedCapacity = (currentBuffer?.Length ?? 0) - currentIndex;
+        var unusedCapacity = (_currentBuffer?.Length ?? 0) - _currentIndex;
         var bufferLength = Math.Max(sizeHint, DEFAULT_BUFFER_SIZE);
 
         // Return early if we already have enough capacity.
@@ -71,31 +71,31 @@ public class PooledSequenceBufferWriter<T> : IBufferWriter<T>
 
         // If this is already multi-segment, append the current buffer into 
         // the linked list and rent a fresh one.
-        if (segmentEnd is not null)
+        if (_segmentEnd is not null)
         {
-            segmentEnd = segmentEnd.Append(currentBuffer!, 0..currentIndex);
-            currentBuffer = ArrayPool<T>.Shared.Rent(bufferLength);
-            currentIndex = 0;
+            _segmentEnd = _segmentEnd.Append(_currentBuffer!, 0.._currentIndex);
+            _currentBuffer = ArrayPool<T>.Shared.Rent(bufferLength);
+            _currentIndex = 0;
             return;
         }
 
         // Single-segment is out of space.  Convert this to multi-segment.
-        if (currentBuffer is not null)
+        if (_currentBuffer is not null)
         {
             // SequenceSegment allocates memory 
             // and evidently there's no way around it short of a grow-copy-buffer approach.
-            segmentStart = new SequenceSegment<T>(currentBuffer, 0..currentIndex);
-            segmentEnd = segmentStart;
-            currentBuffer = ArrayPool<T>.Shared.Rent(bufferLength);
-            currentIndex = 0;
+            _segmentStart = new SequenceSegment<T>(_currentBuffer, 0.._currentIndex);
+            _segmentEnd = _segmentStart;
+            _currentBuffer = ArrayPool<T>.Shared.Rent(bufferLength);
+            _currentIndex = 0;
             return;
         }
 
         // Must be the first write.  Rent a fresh buffer.
-        if (currentBuffer is null)
+        if (_currentBuffer is null)
         {
-            currentBuffer = ArrayPool<T>.Shared.Rent(bufferLength);
-            currentIndex = 0;
+            _currentBuffer = ArrayPool<T>.Shared.Rent(bufferLength);
+            _currentIndex = 0;
             return;
         }
     }

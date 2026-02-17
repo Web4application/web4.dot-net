@@ -4,61 +4,61 @@ namespace Web4.Keyholes;
 
 public class KeyCursor
 {
-    private const byte separator = (byte)':';
-    private readonly List<int> keyDigits = [-1];
-    private KeyCache keyCache = KeyCache.Root;
+    private const byte _separator = (byte)':';
+    private readonly List<int> _keyDigits = [-1];
+    private KeyCache _keyCache = KeyCache.Root;
 
-    public int CurrentIndex => keyDigits[CurrentDepth];
+    public int CurrentIndex => _keyDigits[CurrentDepth];
     public int CurrentDepth { get; private set; }
-    public byte[] Parent => keyCache.Key;
+    public byte[] Parent => _keyCache.Key;
 
     public KeyCursor() => Reset();
 
     public void Reset()
     {
         CurrentDepth = 0;
-        keyDigits[0] = -1;
-        keyCache = KeyCache.Root;
+        _keyDigits[0] = -1;
+        _keyCache = KeyCache.Root;
     }
 
     public byte[] MoveNext()
     {
-        keyDigits[CurrentDepth]++;
+        _keyDigits[CurrentDepth]++;
         return GetOrCreateCurrent();
     }
 
     public void MoveDown()
     {
-        keyCache = keyCache.NextGeneration(keyDigits[CurrentDepth]);
+        _keyCache = _keyCache.NextGeneration(_keyDigits[CurrentDepth]);
         CurrentDepth++;
 
-        if (keyDigits.Count > CurrentDepth)
-            keyDigits[CurrentDepth] = -1;
+        if (_keyDigits.Count > CurrentDepth)
+            _keyDigits[CurrentDepth] = -1;
         else
-            keyDigits.Add(-1);
+            _keyDigits.Add(-1);
     }
 
     public byte[] MoveUp()
     {
-        keyCache = keyCache.Parent;
+        _keyCache = _keyCache.Parent;
         CurrentDepth--;
         return GetOrCreateCurrent();
     }
 
     private byte[] GetOrCreateCurrent()
     {
-        int index = keyDigits[CurrentDepth];
+        int index = _keyDigits[CurrentDepth];
 
-        var key = keyCache[index];
+        var key = _keyCache[index];
         if (key is not null)
             return key;
 
         key = GenerateKey(
-            parentKey: keyCache.Key, 
+            parentKey: _keyCache.Key, 
             childIndex: index
         );
 
-        keyCache[index] = key;
+        _keyCache[index] = key;
 
         return key;
     }
@@ -77,7 +77,7 @@ public class KeyCursor
         {
             buffer = new byte[parentKey.Length + length + 1];
             parentKey.CopyTo(buffer);
-            buffer[parentKey.Length] = separator;
+            buffer[parentKey.Length] = _separator;
             dest = buffer.AsSpan(parentKey.Length + 1);
         }
 

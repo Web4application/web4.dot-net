@@ -6,25 +6,25 @@ namespace Web4.Keyholes.Composers;
 
 public class FindKeyComposer : BaseKeyComposer
 {
-    [ThreadStatic] static FindKeyComposer? reusable;
-    public static FindKeyComposer Shared => reusable ??= new FindKeyComposer();
+    [ThreadStatic] static FindKeyComposer? _reusable;
+    public static FindKeyComposer Shared => _reusable ??= new FindKeyComposer();
 
-    private EventListener eventListener = default;
-    private byte[] keyBuffer = [];
-    private Memory<byte> searchKey;
-    private bool isFound = false;
+    private EventListener _eventListener = default;
+    private byte[] _keyBuffer = [];
+    private Memory<byte> _searchKey;
+    private bool _isFound = false;
 
     public EventListener FindEventListener(ReadOnlySpan<byte> key, Func<Html> template)
     {
-        if (keyBuffer.Length < key.Length)
-            keyBuffer = new byte[key.Length];
-        key.CopyTo(keyBuffer);
-        return FindEventListener(keyBuffer.AsMemory(..key.Length), template);
+        if (_keyBuffer.Length < key.Length)
+            _keyBuffer = new byte[key.Length];
+        key.CopyTo(_keyBuffer);
+        return FindEventListener(_keyBuffer.AsMemory(..key.Length), template);
     }
 
     public EventListener FindEventListener(Memory<byte> key, Func<Html> template)
     {
-        searchKey = key;
+        _searchKey = key;
         return Interpolate($"{template()}");
     }
 
@@ -34,7 +34,7 @@ public class FindKeyComposer : BaseKeyComposer
         // By the time you've reached this line, the templating work has already completed.
         
         // Hang onto the result before html.Dispose() resets this class.
-        var result = eventListener;
+        var result = _eventListener;
 
         // html.Dispose() calls composer.Reset() which sets everything back to null.
         html.Dispose();
@@ -48,25 +48,25 @@ public class FindKeyComposer : BaseKeyComposer
     // And isFound is used to trickle that upwards to all parent Htmls.
     
     protected override bool OnKeyhole(ref Html parent)
-        => !isFound && base.OnKeyhole(ref parent);
+        => !_isFound && base.OnKeyhole(ref parent);
 
     public override bool OnHtmlBegin(ref Html html, int relativeOrder = -1)
-        => !isFound && base.OnHtmlBegin(ref html, relativeOrder);
+        => !_isFound && base.OnHtmlBegin(ref html, relativeOrder);
 
     public override bool OnHtmlKeyhole(ref Html parent, scoped Html html, int relativeOrder = -1, string? transition = null, string? expression = null)
-        => !isFound && base.OnHtmlKeyhole(ref parent, html, relativeOrder, transition, expression);
+        => !_isFound && base.OnHtmlKeyhole(ref parent, html, relativeOrder, transition, expression);
 
     public override bool OnHtmlEnd(ref Html parent, scoped Html html, int relativeOrder = -1, string? transition = null, string? expression = null)
-        => !isFound && base.OnHtmlEnd(ref parent, html, relativeOrder, transition, expression);
+        => !_isFound && base.OnHtmlEnd(ref parent, html, relativeOrder, transition, expression);
 
     public override bool OnIteratorBegin(ref Html parent, ref Html htmls, string? transition = null, string? expression = null)
-        => !isFound && base.OnIteratorBegin(ref parent, ref htmls, transition, expression);
+        => !_isFound && base.OnIteratorBegin(ref parent, ref htmls, transition, expression);
 
     public override bool OnIteratorKeyhole<T>(ref Html parent, ref Html htmls, Html.Enumerable<T> enumerable, string? transition = null, string? expression = null)
-        => !isFound && base.OnIteratorKeyhole(ref parent, ref htmls, enumerable, transition, expression);
+        => !_isFound && base.OnIteratorKeyhole(ref parent, ref htmls, enumerable, transition, expression);
 
     public override bool OnIteratorEnd(ref Html parent, ref Html htmls, string? transition = null, string? expression = null)
-        => !isFound && base.OnIteratorEnd(ref parent, ref htmls, transition, expression);
+        => !_isFound && base.OnIteratorEnd(ref parent, ref htmls, transition, expression);
 
     public override bool OnListener(ref Html parent, Action listener, string? trim = null, string? expression = null)
         => OnListener(ref parent, listener);
@@ -79,29 +79,29 @@ public class FindKeyComposer : BaseKeyComposer
 
     private bool OnListener<T>(ref Html parent, T listener)
     {
-        if (isFound)
+        if (_isFound)
             return false;
             
         base.OnKeyhole(ref parent);
         
-        if (Key.SequenceEqual(searchKey.Span))
+        if (Key.SequenceEqual(_searchKey.Span))
         {
             switch (listener)
             {
                 case Action action:
-                    eventListener.Action = action;
+                    _eventListener.Action = action;
                     break;
                 case Action<Event> actionEvent:
-                    eventListener.ActionEvent = actionEvent;
+                    _eventListener.ActionEvent = actionEvent;
                     break;
                 case Func<Task> func:
-                    eventListener.Func = func;
+                    _eventListener.Func = func;
                     break;
                 case Func<Event, Task> funcEvent:
-                    eventListener.FuncEvent = funcEvent;
+                    _eventListener.FuncEvent = funcEvent;
                     break;
             }
-            isFound = true;
+            _isFound = true;
             return false;
         }
         
@@ -110,9 +110,9 @@ public class FindKeyComposer : BaseKeyComposer
 
     public override void Reset()
     {
-        searchKey = default;
-        isFound = false;
-        eventListener = default;
+        _searchKey = default;
+        _isFound = false;
+        _eventListener = default;
         base.Reset();
     }
 }

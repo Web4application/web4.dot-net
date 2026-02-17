@@ -22,40 +22,40 @@ namespace Web4.WebSocket.Dom;
 /// </summary>
 public record struct EventProxy : Event, IDisposable
 {
-    private static readonly ObjectPool<Dictionary<string, long>> valueDictionaryPool = ObjectPool.Create<Dictionary<string, long>>();
+    private static readonly ObjectPool<Dictionary<string, long>> _valueDictionaryPool = ObjectPool.Create<Dictionary<string, long>>();
 
-    private readonly ReadOnlySequence<byte> rpcMessage;
-    private readonly ReadOnlySequence<byte> eventParam;
-    private readonly IWindow window;
-    private readonly Propagation propagation;
-    private Dictionary<string, long>? values = null; // Here, longs are used to encode bools, ints, and doubles.
-    private Dictionary<string, object>? references = null;
+    private readonly ReadOnlySequence<byte> _rpcMessage;
+    private readonly ReadOnlySequence<byte> _eventParam;
+    private readonly IWindow _window;
+    private readonly Propagation _propagation;
+    private Dictionary<string, long>? _values = null; // Here, longs are used to encode bools, ints, and doubles.
+    private Dictionary<string, object>? _references = null;
 
     public EventProxy(ReadOnlySequence<byte> rpcMessage, ReadOnlySequence<byte> eventParam, IWindow window, Propagation propagation)
     {
-        this.rpcMessage = rpcMessage;
-        this.eventParam = eventParam;
-        this.window = window;
-        this.propagation = propagation;
+        _rpcMessage = rpcMessage;
+        _eventParam = eventParam;
+        _window = window;
+        _propagation = propagation;
     }
 
     public void Dispose()
     {
         // TODO: Custom ObjectDisposedException? It'd be helpful to throw a custom message about trying to use LazyEvent beyond the scope of its event listener.  
 
-        values?.Clear();
-        references?.Clear();
-        if (values is not null)
-            valueDictionaryPool.Return(values);
-        rpcMessage.ReturnToPool();
+        _values?.Clear();
+        _references?.Clear();
+        if (_values is not null)
+            _valueDictionaryPool.Return(_values);
+        _rpcMessage.ReturnToPool();
     }
 
     private void LazyParse(bool canIgnoreRefTypes = false)
     {
-        if (values is null)
+        if (_values is null)
             Parse(canIgnoreRefTypes);
 
-        if (!canIgnoreRefTypes && references is null)
+        if (!canIgnoreRefTypes && _references is null)
             Parse(canIgnoreRefTypes);
     }
 
@@ -63,7 +63,7 @@ public record struct EventProxy : Event, IDisposable
     {
         try
         {
-            var reader = new Utf8JsonReader(eventParam);
+            var reader = new Utf8JsonReader(_eventParam);
             while (reader.Read())
             {
                 if (reader.TokenType == JsonTokenType.PropertyName)
@@ -82,47 +82,47 @@ public record struct EventProxy : Event, IDisposable
                         };
                         if (value is long l)
                         {
-                            values ??= valueDictionaryPool.Get();
-                            values[propertyName] = l;
+                            _values ??= _valueDictionaryPool.Get();
+                            _values[propertyName] = l;
                         }
 
                         if (!canIgnoreRefTypes)
                         {
                             if (type == typeof(string))
                             {
-                                references ??= [];
+                                _references ??= [];
                                 var str = reader.GetString();
                                 if (str is not null)
-                                    references[propertyName] = str;
+                                    _references[propertyName] = str;
                             }
                             else if (type == typeof(ABG))
                             {
-                                references ??= [];
+                                _references ??= [];
                                 // TODO: Implement
                             }
                             else if (type == typeof(DataTransferContainer))
                             {
-                                references ??= [];
+                                _references ??= [];
                                 // TODO: Implement
                             }
                             else if (type == typeof(DOMException))
                             {
-                                references ??= [];
+                                _references ??= [];
                                 // TODO: Implement
                             }
                             else if (type == typeof(EventTarget))
                             {
-                                references ??= [];
+                                _references ??= [];
                                 ParseEventTarget(reader, propertyName);
                             }
                             else if (type == typeof(TouchPoint[]))
                             {
-                                references ??= [];
+                                _references ??= [];
                                 // TODO: Implement
                             }
                             else if (type == typeof(XYZ))
                             {
-                                references ??= [];
+                                _references ??= [];
                                 // TODO: Implement
                             }
                         }
@@ -139,39 +139,39 @@ public record struct EventProxy : Event, IDisposable
     private object? GetReference(string propName)
     {
         LazyParse(canIgnoreRefTypes: false);
-        return references?.GetValueOrDefault(propName);
+        return _references?.GetValueOrDefault(propName);
     }
 
     private bool? GetBool(string propName)
     {
         LazyParse(canIgnoreRefTypes: true);
-        return values is null
+        return _values is null
             ? null
-            : values.TryGetValue(propName, out long value) ? value != 0 : null;
+            : _values.TryGetValue(propName, out long value) ? value != 0 : null;
     }
 
     private int? GetInt(string propName)
     {
         LazyParse(canIgnoreRefTypes: true);
-        return values is null
+        return _values is null
             ? null
-            : values.TryGetValue(propName, out long value) ? (int)value : null;
+            : _values.TryGetValue(propName, out long value) ? (int)value : null;
     }
 
     private long? GetLong(string propName)
     {
         LazyParse(canIgnoreRefTypes: true);
-        return values is null
+        return _values is null
             ? null
-            : values.TryGetValue(propName, out long value) ? value : null;
+            : _values.TryGetValue(propName, out long value) ? value : null;
     }
 
     private double? GetDouble(string propName)
     {
         LazyParse(canIgnoreRefTypes: true);
-        return values is null
+        return _values is null
             ? null
-            : values.TryGetValue(propName, out long value)
+            : _values.TryGetValue(propName, out long value)
                 ? BitConverter.Int64BitsToDouble(value)
                 : null;
     }
@@ -179,7 +179,7 @@ public record struct EventProxy : Event, IDisposable
     private EventTarget? GetTarget(string propName)
     {
         LazyParse(canIgnoreRefTypes: false);
-        return references?.GetValueOrDefault(propName) as EventTarget;
+        return _references?.GetValueOrDefault(propName) as EventTarget;
     }
 
     private void ParseEventTarget(Utf8JsonReader reader, string propertyName)
@@ -190,7 +190,7 @@ public record struct EventProxy : Event, IDisposable
         {
             if (reader.TokenType == JsonTokenType.EndObject)
             {
-                references![propertyName] = new EventTarget(id, name, type, @checked, value);
+                _references![propertyName] = new EventTarget(id, name, type, @checked, value);
                 return;
             }
 
@@ -209,7 +209,7 @@ public record struct EventProxy : Event, IDisposable
     {
         if (reader.ValueTextEquals(propertyName))
         {
-            references ??= [];
+            _references ??= [];
             reader.Read();
             value = reader.GetString() ?? "";
             return true;
@@ -221,7 +221,7 @@ public record struct EventProxy : Event, IDisposable
     {
         if (reader.ValueTextEquals(propertyName))
         {
-            references ??= [];
+            _references ??= [];
             reader.Read();
             value = reader.GetBoolean();
             return true;
@@ -626,7 +626,7 @@ public record struct EventProxy : Event, IDisposable
     public string? Type => GetReference("type") as string;
     string IEvent.Type => Type ?? string.Empty;
 
-    public IWindow? View => this.window;
+    public IWindow? View => _window;
     IWindow IViewSubset.View => View!;
 
     public int? Width => GetInt("width");
@@ -638,7 +638,7 @@ public record struct EventProxy : Event, IDisposable
     public double? Y => GetDouble("y");
     double IXYSubset.Y => Y ?? default;
 
-    public void StopPropagation() => propagation.Stop();
+    public void StopPropagation() => _propagation.Stop();
 
-    public void StopImmediatePropagation() => propagation.StopImmediate();
+    public void StopImmediatePropagation() => _propagation.StopImmediate();
 }

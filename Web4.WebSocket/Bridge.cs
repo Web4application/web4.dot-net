@@ -17,17 +17,17 @@ namespace Web4.WebSocket;
 
 public partial class Bridge(HttpContext httpContext, WindowBuilder windowBuilder, ILogger logger)
 {
-    private static readonly ConcurrentDictionary<string, Bridge> windows = [];
+    private static readonly ConcurrentDictionary<string, Bridge> _windows = [];
     public static SnapshotStrategy SnapshotStrategy { get; set; } = SnapshotStrategy.Retain;
 
-    private Keyhole[]? snapshot = null;
-    private bool isInvalidated = false;
-    private readonly Propagation propagation = new();
+    private Keyhole[]? _snapshot = null;
+    private bool _isInvalidated = false;
+    private readonly Propagation _propagation = new();
     
-    private TimeSpan diffInterval = TimeSpan.FromMilliseconds(1000d / 60d); // 60fps
-    private readonly Channel<int> diffChannel = CreateDiffChannel();
-    private readonly Channel<ReadOnlySequence<byte>> outputChannel = CreateOutputChannel();
-    private JsonRpcWriter JsonRpc => JsonRpcWriter.Current(outputChannel.Writer);
+    private TimeSpan _diffInterval = TimeSpan.FromMilliseconds(1000d / 60d); // 60fps
+    private readonly Channel<int> _diffChannel = CreateDiffChannel();
+    private readonly Channel<ReadOnlySequence<byte>> _outputChannel = CreateOutputChannel();
+    private JsonRpcWriter JsonRpc => JsonRpcWriter.Current(_outputChannel.Writer);
 
     public static async Task Bind(
         HttpContext http,
@@ -48,7 +48,7 @@ public partial class Bridge(HttpContext httpContext, WindowBuilder windowBuilder
         using var webSocket = await http.WebSockets.AcceptWebSocketAsync(context);
         using var reg = cancelProcess.Register(async () => await Disconnect(webSocket));
 
-        windows[windowID] = bridge;
+        _windows[windowID] = bridge;
 
         await Task.WhenAny(
             bridge.OutputToWebSocket(webSocket, http.RequestAborted),
@@ -58,7 +58,7 @@ public partial class Bridge(HttpContext httpContext, WindowBuilder windowBuilder
 
         logger.LogInformation("👋 Goodbye, {WindowID}!", windowID);
 
-        windows.Remove(windowID, out var _);
+        _windows.Remove(windowID, out var _);
     }
 
     private static Channel<int> CreateDiffChannel() => Channel.CreateBounded<int>(new BoundedChannelOptions(1)
@@ -91,7 +91,7 @@ public partial class Bridge(HttpContext httpContext, WindowBuilder windowBuilder
         {
             try
             {
-                var sequence = await outputChannel.Reader.ReadAsync(cancel);
+                var sequence = await _outputChannel.Reader.ReadAsync(cancel);
                 var bytesRemaining = sequence.Length;
                 foreach (var memory in sequence)
                 {
@@ -176,14 +176,14 @@ public partial class Bridge(HttpContext httpContext, WindowBuilder windowBuilder
             // There could be (potentially) millions of state changes every 16 ms
             // and it'd be wasteful to run diffs or send mutations for each
             // when most screens can only handle 60 Hz.
-            var timeUntilNextUpdate = diffInterval.Subtract(lastUpdate.Elapsed);
+            var timeUntilNextUpdate = _diffInterval.Subtract(lastUpdate.Elapsed);
             if (timeUntilNextUpdate > TimeSpan.Zero)
                 await Task.Delay(timeUntilNextUpdate, cancel);
             lastUpdate.Restart();
 
             // If here, this app has a green light to do work again 
             // so await until an update is requested.  
-            _ = await diffChannel.Reader.ReadAsync(cancel);
+            _ = await _diffChannel.Reader.ReadAsync(cancel);
             Reconcile();
         }
     }
@@ -192,7 +192,7 @@ public partial class Bridge(HttpContext httpContext, WindowBuilder windowBuilder
     {
         // TODO: This doesn't belong here.
         // TODO: Once you figure out where they belong, they need to be in try/catches.
-        foreach (var t in windows.Values)
+        foreach (var t in _windows.Values)
             t.Invalidate();
 
         try
@@ -227,12 +227,12 @@ public partial class Bridge(HttpContext httpContext, WindowBuilder windowBuilder
                 case var method when method.EndsWith("dispatchEvent"u8):
                     {
                         var eventSequence = @params.GetNextAsSequence();
-                        propagation.CurrentID = @params.GetNextAsInt();
-                        propagation.CurrentLevel = @params.GetNextOptionalAsInt() ?? 0;
+                        _propagation.CurrentID = @params.GetNextAsInt();
+                        _propagation.CurrentLevel = @params.GetNextOptionalAsInt() ?? 0;
 
                         // Do not handle this event if `stopPropagation()` or `stopImmediatePropagation()`
                         // has previously been called on the browser's same event instance.
-                        if (propagation.IsStopped)
+                        if (_propagation.IsStopped)
                             return sequence;
 
                         DispatchEvent(sequence, eventSequence, GetKey(method));
@@ -253,7 +253,7 @@ public partial class Bridge(HttpContext httpContext, WindowBuilder windowBuilder
         finally
         {
             // TODO: This doesn't belong here.
-            foreach (var t in windows.Values)
+            foreach (var t in _windows.Values)
                 t.Update();
         }
         return sequence;
@@ -286,7 +286,7 @@ public partial class Bridge(HttpContext httpContext, WindowBuilder windowBuilder
 
             Keyholes.DispatchEvent(
                 listenerWithEvent,
-                new EventProxy(sequence, eventSequence, this, propagation)
+                new EventProxy(sequence, eventSequence, this, _propagation)
             // LazyEvent will return buffer(s) to the pool after it completes.
             );
         }
@@ -307,7 +307,7 @@ public partial class Bridge(HttpContext httpContext, WindowBuilder windowBuilder
             // Do not await event listeners here!  That would block the WebSocket reader.
             _ = Keyholes.DispatchEvent(
                 listenerWithEventAsync,
-                new EventProxy(sequence, eventSequence, this, propagation)
+                new EventProxy(sequence, eventSequence, this, _propagation)
             // LazyEvent will return buffer(s) to the pool after it completes.
             );
         }
@@ -329,7 +329,7 @@ public partial class Bridge(HttpContext httpContext, WindowBuilder windowBuilder
 
     public void SetRefreshRate(int milliseconds)
     {
-        diffInterval = TimeSpan.FromMilliseconds(milliseconds);
+        _diffInterval = TimeSpan.FromMilliseconds(milliseconds);
     }
 
     private Keyhole[] CaptureSnapshot()
@@ -341,33 +341,33 @@ public partial class Bridge(HttpContext httpContext, WindowBuilder windowBuilder
 
     public void Invalidate()
     {
-        if (isInvalidated)
+        if (_isInvalidated)
             return;
 
-        isInvalidated = true;
+        _isInvalidated = true;
 
         // This only does work when SnapshotStrategy is in "Recapture" mode
         // since snapshot is never set to null while operating in "Retain" mode.
-        snapshot ??= CaptureSnapshot();
+        _snapshot ??= CaptureSnapshot();
     }
 
     public void Update()
     {
-        if (!isInvalidated)
+        if (!_isInvalidated)
             return;
 
-        while (!diffChannel.Writer.TryWrite(0)) ;
+        while (!_diffChannel.Writer.TryWrite(0)) ;
     }
 
     private void Reconcile()
     {
-        if (!isInvalidated)
+        if (!_isInvalidated)
         {
             logger.LogWarning("Cancelling Reconcile() because IsInvalidated is false (which is unexpected and should be investigated).");
             return;
         }
 
-        if (snapshot is null)
+        if (_snapshot is null)
         {
             logger.LogWarning("Cancelling Reconcile() because snapshot is null (which is unexpected and should be investigated).");
             return;
@@ -375,7 +375,7 @@ public partial class Bridge(HttpContext httpContext, WindowBuilder windowBuilder
 
         try
         {
-            Keyhole[] oldBuffer = snapshot;
+            Keyhole[] oldBuffer = _snapshot;
             Keyhole[] newBuffer = CaptureSnapshot();
             using (var batchOutput = JsonRpc.BatchThisScope())
             {
@@ -387,13 +387,13 @@ public partial class Bridge(HttpContext httpContext, WindowBuilder windowBuilder
             {
                 case SnapshotStrategy.Recapture:
                     // Do not keep this snapshot buffer for later.
-                    snapshot = null;
+                    _snapshot = null;
                     pool.Return(oldBuffer);
                     pool.Return(newBuffer);
                     break;
                 case SnapshotStrategy.Retain:
                     // Keep this snapshot buffer around to use as the "before" next time.
-                    snapshot = newBuffer;
+                    _snapshot = newBuffer;
                     pool.Return(oldBuffer);
                     break;
             }
@@ -403,6 +403,6 @@ public partial class Bridge(HttpContext httpContext, WindowBuilder windowBuilder
             logger.LogError(ex, "Unexpected error reconciling diffs: {Message}", ex.Message);
         }
 
-        isInvalidated = false;
+        _isInvalidated = false;
     }
 }

@@ -13,26 +13,26 @@ public partial class JsonRpcWriter : IDisposable
     // https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/character-encoding
     private readonly static JsonWriterOptions options = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
     [ThreadStatic]
-    private static JsonRpcWriter? threadStaticWriter;
-    private readonly PooledSequenceBufferWriter<byte> bufferWriter;
-    private readonly Utf8JsonWriter jsonWriter;
-    private ChannelWriter<ReadOnlySequence<byte>>? flusher = null;
-    private FlushOnAwait? flushOnAwait;
-    private bool isBatch = false;
+    private static JsonRpcWriter? _threadStaticWriter;
+    private readonly PooledSequenceBufferWriter<byte> _bufferWriter;
+    private readonly Utf8JsonWriter _jsonWriter;
+    private ChannelWriter<ReadOnlySequence<byte>>? _flusher = null;
+    private FlushOnAwait? _flushOnAwait;
+    private bool _isBatch = false;
 
     private JsonRpcWriter()
     {
-        bufferWriter = new();
-        jsonWriter = new(bufferWriter, options);
+        _bufferWriter = new();
+        _jsonWriter = new(_bufferWriter, options);
     }
 
     public static JsonRpcWriter Current(ChannelWriter<ReadOnlySequence<byte>> flusher)
     {
-        var writer = threadStaticWriter ??= new();
-        writer.flusher = flusher;
+        var writer = _threadStaticWriter ??= new();
+        writer._flusher = flusher;
 
         if (SynchronizationContext.Current is FlushOnAwait)
-            writer.isBatch = true;
+            writer._isBatch = true;
 
         return writer;
     }
@@ -41,16 +41,16 @@ public partial class JsonRpcWriter : IDisposable
     {
         if (continueOnCapturedContext)
         {
-            flushOnAwait ??= new();
-            flushOnAwait.Flusher = flusher;
-            SynchronizationContext.SetSynchronizationContext(flushOnAwait);
+            _flushOnAwait ??= new();
+            _flushOnAwait.Flusher = _flusher;
+            SynchronizationContext.SetSynchronizationContext(_flushOnAwait);
         }
 
-        if (!isBatch)
+        if (!_isBatch)
         {
-            if (bufferWriter.WrittenCount > 0)
+            if (_bufferWriter.WrittenCount > 0)
                 throw new InvalidOperationException("Cannot switch to batch.  Buffer already written to.");
-            isBatch = true;
+            _isBatch = true;
         }
 
         return new FlushOnDispose(this, continueOnCapturedContext);
@@ -58,35 +58,35 @@ public partial class JsonRpcWriter : IDisposable
 
     public void Flush()
     {
-        jsonWriter.Flush();
+        _jsonWriter.Flush();
 
-        if (isBatch && bufferWriter.WrittenCount > 0)
+        if (_isBatch && _bufferWriter.WrittenCount > 0)
         {
-            jsonWriter.WriteEndArray();
-            jsonWriter.Flush();
+            _jsonWriter.WriteEndArray();
+            _jsonWriter.Flush();
         }
 
-        isBatch = false;
+        _isBatch = false;
 
-        if (bufferWriter.WrittenCount == 0)
+        if (_bufferWriter.WrittenCount == 0)
             return;
 
-        var buffer = bufferWriter.Sequence;
-        jsonWriter.Reset(bufferWriter);
+        var buffer = _bufferWriter.Sequence;
+        _jsonWriter.Reset(_bufferWriter);
 
-        if (flusher is null)
+        if (_flusher is null)
             throw new InvalidOperationException("🛑 Trying to flush when flusher is null.  This should be impossible.  Needs investigating.");
-        while (!flusher.TryWrite(buffer)) ;
+        while (!_flusher.TryWrite(buffer)) ;
     }
 
     public void WriteNotification(string method)
     {
         OnMessageBegin();
 
-        jsonWriter.WriteStartObject();
-        jsonWriter.WriteString("jsonrpc", "2.0");
-        jsonWriter.WriteString("method", method);
-        jsonWriter.WriteEndObject();
+        _jsonWriter.WriteStartObject();
+        _jsonWriter.WriteString("jsonrpc", "2.0");
+        _jsonWriter.WriteString("method", method);
+        _jsonWriter.WriteEndObject();
 
         OnMessageEnd();
     }
@@ -95,16 +95,16 @@ public partial class JsonRpcWriter : IDisposable
     {
         OnMessageBegin();
 
-        jsonWriter.WriteStartObject();
-        jsonWriter.WriteString("jsonrpc", "2.0");
+        _jsonWriter.WriteStartObject();
+        _jsonWriter.WriteString("jsonrpc", "2.0");
 
-        jsonWriter.WriteString("method", method);
+        _jsonWriter.WriteString("method", method);
 
-        jsonWriter.WriteStartArray("params");
+        _jsonWriter.WriteStartArray("params");
         WriteTValue(param1);
-        jsonWriter.WriteEndArray();
+        _jsonWriter.WriteEndArray();
 
-        jsonWriter.WriteEndObject();
+        _jsonWriter.WriteEndObject();
 
         OnMessageEnd();
     }
@@ -113,18 +113,18 @@ public partial class JsonRpcWriter : IDisposable
     {
         OnMessageBegin();
 
-        jsonWriter.WriteStartObject();
-        jsonWriter.WriteString("jsonrpc", "2.0");
+        _jsonWriter.WriteStartObject();
+        _jsonWriter.WriteString("jsonrpc", "2.0");
 
-        jsonWriter.WriteString("method", method);
+        _jsonWriter.WriteString("method", method);
 
-        jsonWriter.WriteStartArray("params");
-        jsonWriter.WriteStringValue(param1);
+        _jsonWriter.WriteStartArray("params");
+        _jsonWriter.WriteStringValue(param1);
         foreach (var param in @params)
-            jsonWriter.WriteStringValue(param);
-        jsonWriter.WriteEndArray();
+            _jsonWriter.WriteStringValue(param);
+        _jsonWriter.WriteEndArray();
 
-        jsonWriter.WriteEndObject();
+        _jsonWriter.WriteEndObject();
 
         OnMessageEnd();
     }
@@ -133,17 +133,17 @@ public partial class JsonRpcWriter : IDisposable
     {
         OnMessageBegin();
 
-        jsonWriter.WriteStartObject();
-        jsonWriter.WriteString("jsonrpc", "2.0");
+        _jsonWriter.WriteStartObject();
+        _jsonWriter.WriteString("jsonrpc", "2.0");
 
-        jsonWriter.WriteString("method", method);
+        _jsonWriter.WriteString("method", method);
 
-        jsonWriter.WriteStartArray("params");
+        _jsonWriter.WriteStartArray("params");
         foreach (var param in @params)
-            jsonWriter.WriteStringValue(param.ToString());
-        jsonWriter.WriteEndArray();
+            _jsonWriter.WriteStringValue(param.ToString());
+        _jsonWriter.WriteEndArray();
 
-        jsonWriter.WriteEndObject();
+        _jsonWriter.WriteEndObject();
 
         OnMessageEnd();
     }
@@ -153,31 +153,31 @@ public partial class JsonRpcWriter : IDisposable
     {
         OnMessageBegin();
 
-        jsonWriter.WriteStartObject();
-        jsonWriter.WriteString("jsonrpc", "2.0");
+        _jsonWriter.WriteStartObject();
+        _jsonWriter.WriteString("jsonrpc", "2.0");
 
-        jsonWriter.WritePropertyName("method");
-        jsonWriter.WriteStringValueSegment(method.Item1, false);
+        _jsonWriter.WritePropertyName("method");
+        _jsonWriter.WriteStringValueSegment(method.Item1, false);
         WriteKey(method.Item2);
-        jsonWriter.WriteStringValueSegment(method.Item3, true);
+        _jsonWriter.WriteStringValueSegment(method.Item3, true);
 
-        jsonWriter.WriteStartArray("params");
+        _jsonWriter.WriteStartArray("params");
 
         if (param1.Type == KeyholeType.Boolean)
         {
             // HTML treats boolean attributes differently.  Send without quotes.
-            jsonWriter.WriteBooleanValue(param1.Boolean);
+            _jsonWriter.WriteBooleanValue(param1.Boolean);
         }
         else
         {
-            jsonWriter.WriteStringValueSegment("", false);
+            _jsonWriter.WriteStringValueSegment("", false);
             WriteMutableKeyholeValue(ref param1);
-            jsonWriter.WriteStringValueSegment("", true);
+            _jsonWriter.WriteStringValueSegment("", true);
         }
 
-        jsonWriter.WriteEndArray();
+        _jsonWriter.WriteEndArray();
 
-        jsonWriter.WriteEndObject();
+        _jsonWriter.WriteEndObject();
 
         OnMessageEnd();
     }
@@ -187,22 +187,22 @@ public partial class JsonRpcWriter : IDisposable
     {
         OnMessageBegin();
 
-        jsonWriter.WriteStartObject();
-        jsonWriter.WriteString("jsonrpc", "2.0");
+        _jsonWriter.WriteStartObject();
+        _jsonWriter.WriteString("jsonrpc", "2.0");
 
-        jsonWriter.WritePropertyName("method");
-        jsonWriter.WriteStringValueSegment(method.Item1, false);
+        _jsonWriter.WritePropertyName("method");
+        _jsonWriter.WriteStringValueSegment(method.Item1, false);
         WriteKey(method.Item2);
-        jsonWriter.WriteStringValueSegment(method.Item3, true);
+        _jsonWriter.WriteStringValueSegment(method.Item3, true);
 
-        jsonWriter.WriteStartArray("params");
+        _jsonWriter.WriteStartArray("params");
 
         WriteAttributeSequence(param1);
-        jsonWriter.WriteStringValueSegment("", true);
+        _jsonWriter.WriteStringValueSegment("", true);
 
-        jsonWriter.WriteEndArray();
+        _jsonWriter.WriteEndArray();
 
-        jsonWriter.WriteEndObject();
+        _jsonWriter.WriteEndObject();
 
         OnMessageEnd();
     }
@@ -212,29 +212,29 @@ public partial class JsonRpcWriter : IDisposable
     {
         OnMessageBegin();
 
-        jsonWriter.WriteStartObject();
-        jsonWriter.WriteString("jsonrpc", "2.0");
+        _jsonWriter.WriteStartObject();
+        _jsonWriter.WriteString("jsonrpc", "2.0");
 
-        jsonWriter.WritePropertyName("method");
-        jsonWriter.WriteStringValueSegment(method.Item1, false);
+        _jsonWriter.WritePropertyName("method");
+        _jsonWriter.WriteStringValueSegment(method.Item1, false);
         WriteKey(method.Item2);
-        jsonWriter.WriteStringValueSegment(method.Item3, true);
+        _jsonWriter.WriteStringValueSegment(method.Item3, true);
 
-        jsonWriter.WriteStartArray("params");
+        _jsonWriter.WriteStartArray("params");
 
         WriteHtml(buffer, param1, includeSentinels: true);
-        jsonWriter.WriteStringValueSegment("", true);
+        _jsonWriter.WriteStringValueSegment("", true);
 
         if (param2.HasValue)
         {
-            jsonWriter.WriteStringValueSegment(param2.Value.Item1, false);
+            _jsonWriter.WriteStringValueSegment(param2.Value.Item1, false);
             WriteKey(method.Item2);
-            jsonWriter.WriteStringValueSegment("", true);
+            _jsonWriter.WriteStringValueSegment("", true);
         }
 
-        jsonWriter.WriteEndArray();
+        _jsonWriter.WriteEndArray();
 
-        jsonWriter.WriteEndObject();
+        _jsonWriter.WriteEndObject();
 
         OnMessageEnd();
     }
@@ -244,34 +244,34 @@ public partial class JsonRpcWriter : IDisposable
     {
         OnMessageBegin();
 
-        jsonWriter.WriteStartObject();
-        jsonWriter.WriteString("jsonrpc", "2.0");
+        _jsonWriter.WriteStartObject();
+        _jsonWriter.WriteString("jsonrpc", "2.0");
 
-        jsonWriter.WritePropertyName("method");
-        jsonWriter.WriteStringValueSegment(method.Item1, false);
+        _jsonWriter.WritePropertyName("method");
+        _jsonWriter.WriteStringValueSegment(method.Item1, false);
         WriteKey(method.Item2);
-        jsonWriter.WriteStringValueSegment(method.Item3, true);
+        _jsonWriter.WriteStringValueSegment(method.Item3, true);
 
-        jsonWriter.WriteStartArray("params");
+        _jsonWriter.WriteStartArray("params");
 
         WriteHtml(buffer, param1, includeSentinels: true);
-        jsonWriter.WriteStringValueSegment("", true);
+        _jsonWriter.WriteStringValueSegment("", true);
 
         Span<char> strInt = stackalloc char[11]; // max int length
 
-        jsonWriter.WriteStringValueSegment(param2.Item1, false);
+        _jsonWriter.WriteStringValueSegment(param2.Item1, false);
         if (param2.Item2.TryFormat(strInt, out int length))
-            jsonWriter.WriteStringValueSegment(strInt[..length], false);
-        jsonWriter.WriteStringValueSegment("", true);
+            _jsonWriter.WriteStringValueSegment(strInt[..length], false);
+        _jsonWriter.WriteStringValueSegment("", true);
 
-        jsonWriter.WriteStringValueSegment(param3.Item1, false);
+        _jsonWriter.WriteStringValueSegment(param3.Item1, false);
         if (param3.Item2.TryFormat(strInt, out length))
-            jsonWriter.WriteStringValueSegment(strInt[..length], false);
-        jsonWriter.WriteStringValueSegment("", true);
+            _jsonWriter.WriteStringValueSegment(strInt[..length], false);
+        _jsonWriter.WriteStringValueSegment("", true);
 
-        jsonWriter.WriteEndArray();
+        _jsonWriter.WriteEndArray();
 
-        jsonWriter.WriteEndObject();
+        _jsonWriter.WriteEndObject();
 
         OnMessageEnd();
     }
@@ -281,33 +281,33 @@ public partial class JsonRpcWriter : IDisposable
     {
         OnMessageBegin();
 
-        jsonWriter.WriteStartObject();
-        jsonWriter.WriteString("jsonrpc", "2.0");
+        _jsonWriter.WriteStartObject();
+        _jsonWriter.WriteString("jsonrpc", "2.0");
 
-        jsonWriter.WritePropertyName("method");
-        jsonWriter.WriteStringValueSegment(method.Item1, false);
+        _jsonWriter.WritePropertyName("method");
+        _jsonWriter.WriteStringValueSegment(method.Item1, false);
         WriteKey(method.Item2);
-        jsonWriter.WriteStringValueSegment(method.Item3, true);
+        _jsonWriter.WriteStringValueSegment(method.Item3, true);
 
-        jsonWriter.WriteStartArray("params");
+        _jsonWriter.WriteStartArray("params");
 
         WriteHtml(buffer, param1, includeSentinels: true);
-        jsonWriter.WriteStringValueSegment("", true);
+        _jsonWriter.WriteStringValueSegment("", true);
 
-        jsonWriter.WriteStringValue(param2);
+        _jsonWriter.WriteStringValue(param2);
 
         if (param3 is not null)
         {
-            jsonWriter.WriteStringValueSegment(param3.Value.Item1, false);
+            _jsonWriter.WriteStringValueSegment(param3.Value.Item1, false);
             Span<char> strInt = stackalloc char[11]; // max int length
             if (param3.Value.Item2.TryFormat(strInt, out int length))
-                jsonWriter.WriteStringValueSegment(strInt[..length], false);
-            jsonWriter.WriteStringValueSegment("", true);
+                _jsonWriter.WriteStringValueSegment(strInt[..length], false);
+            _jsonWriter.WriteStringValueSegment("", true);
         }
 
-        jsonWriter.WriteEndArray();
+        _jsonWriter.WriteEndArray();
 
-        jsonWriter.WriteEndObject();
+        _jsonWriter.WriteEndObject();
 
         OnMessageEnd();
     }
@@ -317,37 +317,37 @@ public partial class JsonRpcWriter : IDisposable
     {
         OnMessageBegin();
 
-        jsonWriter.WriteStartObject();
-        jsonWriter.WriteString("jsonrpc", "2.0");
+        _jsonWriter.WriteStartObject();
+        _jsonWriter.WriteString("jsonrpc", "2.0");
 
-        jsonWriter.WritePropertyName("method");
-        jsonWriter.WriteStringValueSegment(method.Item1, false);
+        _jsonWriter.WritePropertyName("method");
+        _jsonWriter.WriteStringValueSegment(method.Item1, false);
         WriteKey(method.Item2);
-        jsonWriter.WriteStringValueSegment(method.Item3, true);
+        _jsonWriter.WriteStringValueSegment(method.Item3, true);
 
-        jsonWriter.WriteStartArray("params");
+        _jsonWriter.WriteStartArray("params");
 
         if (param1.HasValue)
         {
-            jsonWriter.WriteStringValueSegment(param1.Value.Item1, false);
+            _jsonWriter.WriteStringValueSegment(param1.Value.Item1, false);
             Span<char> strInt = stackalloc char[11]; // max int length
             if (param1.Value.Item2.TryFormat(strInt, out int length))
-                jsonWriter.WriteStringValueSegment(strInt[..length], false);
-            jsonWriter.WriteStringValueSegment("", true);
+                _jsonWriter.WriteStringValueSegment(strInt[..length], false);
+            _jsonWriter.WriteStringValueSegment("", true);
         }
 
-        jsonWriter.WriteEndArray();
+        _jsonWriter.WriteEndArray();
 
-        jsonWriter.WriteEndObject();
+        _jsonWriter.WriteEndObject();
 
         OnMessageEnd();
     }
 
     private void WriteKey(byte[] key)
     {
-        jsonWriter.Flush();
-        key.CopyTo(bufferWriter.GetSpan(key.Length));
-        bufferWriter.Advance(key.Length);
+        _jsonWriter.Flush();
+        key.CopyTo(_bufferWriter.GetSpan(key.Length));
+        _bufferWriter.Advance(key.Length);
     }
 
     private void WriteHtml(Keyhole[] buffer, Span<Keyhole> keyholes, bool includeSentinels)
@@ -359,36 +359,36 @@ public partial class JsonRpcWriter : IDisposable
             switch (keyhole.Type)
             {
                 case KeyholeType.StringLiteral:
-                    jsonWriter.WriteStringValueSegment(keyhole.StringLiteral, false);
+                    _jsonWriter.WriteStringValueSegment(keyhole.StringLiteral, false);
                     break;
                 case KeyholeType.Html:
                     Span<Keyhole> html = buffer.AsSpan(keyhole.Sequence);
                     WriteHtml(buffer, html, includeSentinels);
                     if (includeSentinels)
                     {
-                        jsonWriter.WriteStringValueSegment("<!--/key:", false);
+                        _jsonWriter.WriteStringValueSegment("<!--/key:", false);
                         WriteKey(keyhole.Key);
-                        jsonWriter.WriteStringValueSegment("-->", false);
+                        _jsonWriter.WriteStringValueSegment("-->", false);
                     }
                     break;
                 case KeyholeType.Attribute:
                     Span<Keyhole> attribute = buffer.AsSpan(keyhole.Sequence);
                     WriteAttributeSequence(attribute);
-                    jsonWriter.WriteStringValueSegment("", true);
+                    _jsonWriter.WriteStringValueSegment("", true);
                     break;
                 case KeyholeType.EventListener:
-                    jsonWriter.WriteStringValueSegment("\"keyholes['", false);
+                    _jsonWriter.WriteStringValueSegment("\"keyholes['", false);
                     WriteKey(keyhole.Key);
                     switch (keyhole.TrimModifier)
                     {
                         case "":
-                            jsonWriter.WriteStringValueSegment("'].dispatchEvent(event)\" key:", false);
+                            _jsonWriter.WriteStringValueSegment("'].dispatchEvent(event)\" key:", false);
                             break;
                         case null:
                         default:
-                            jsonWriter.WriteStringValueSegment("'].dispatchEvent(event,'", false);
-                            jsonWriter.WriteStringValueSegment(keyhole.TrimModifier ?? "*", false);
-                            jsonWriter.WriteStringValueSegment("')\" key:", false);
+                            _jsonWriter.WriteStringValueSegment("'].dispatchEvent(event,'", false);
+                            _jsonWriter.WriteStringValueSegment(keyhole.TrimModifier ?? "*", false);
+                            _jsonWriter.WriteStringValueSegment("')\" key:", false);
                             break;
                     }
                     WriteKey(keyhole.Key);
@@ -403,9 +403,9 @@ public partial class JsonRpcWriter : IDisposable
                         WriteHtml(buffer, iterator, true);
                         if (includeSentinels)
                         {
-                            jsonWriter.WriteStringValueSegment("<!--/key:", false);
+                            _jsonWriter.WriteStringValueSegment("<!--/key:", false);
                             WriteKey(keyhole.Key);
-                            jsonWriter.WriteStringValueSegment("-->", false);
+                            _jsonWriter.WriteStringValueSegment("-->", false);
                         }
                     }
                     break;
@@ -413,18 +413,18 @@ public partial class JsonRpcWriter : IDisposable
                 default:
                     if (includeSentinels)
                     {
-                            jsonWriter.WriteStringValueSegment("<!--key:", false);
+                            _jsonWriter.WriteStringValueSegment("<!--key:", false);
                             WriteKey(keyhole.Key);
-                            jsonWriter.WriteStringValueSegment("-->", false);
+                            _jsonWriter.WriteStringValueSegment("-->", false);
                     }
 
                     WriteMutableKeyholeValue(ref keyhole);
 
                     if (includeSentinels)
                     {
-                        jsonWriter.WriteStringValueSegment("<!--/key:", false);
+                        _jsonWriter.WriteStringValueSegment("<!--/key:", false);
                         WriteKey(keyhole.Key);
-                        jsonWriter.WriteStringValueSegment("-->", false);
+                        _jsonWriter.WriteStringValueSegment("-->", false);
                     }
                     break;
             }
@@ -440,7 +440,7 @@ public partial class JsonRpcWriter : IDisposable
             switch (keyhole.Type)
             {
                 case KeyholeType.StringLiteral:
-                    jsonWriter.WriteStringValueSegment(keyhole.StringLiteral, false);
+                    _jsonWriter.WriteStringValueSegment(keyhole.StringLiteral, false);
                     break;
                 // The rest are the mutable keyhole values.  They might use format strings.
                 default:
@@ -459,12 +459,12 @@ public partial class JsonRpcWriter : IDisposable
     {
         OnMessageBegin();
 
-        jsonWriter.WriteStartObject();
-        jsonWriter.WriteString("jsonrpc", "2.0");
-        jsonWriter.WriteNull("result");
-        jsonWriter.WriteNumber("id", id);
-        jsonWriter.WriteEndObject();
-        jsonWriter.Flush();
+        _jsonWriter.WriteStartObject();
+        _jsonWriter.WriteString("jsonrpc", "2.0");
+        _jsonWriter.WriteNull("result");
+        _jsonWriter.WriteNumber("id", id);
+        _jsonWriter.WriteEndObject();
+        _jsonWriter.Flush();
 
         OnMessageEnd();
     }
@@ -473,26 +473,26 @@ public partial class JsonRpcWriter : IDisposable
     {
         OnMessageBegin();
 
-        jsonWriter.WriteStartObject();
-        jsonWriter.WriteString("jsonrpc", "2.0");
-        jsonWriter.WritePropertyName("result");
+        _jsonWriter.WriteStartObject();
+        _jsonWriter.WriteString("jsonrpc", "2.0");
+        _jsonWriter.WritePropertyName("result");
         WriteTValue(result);
-        jsonWriter.WriteNumber("id", id);
-        jsonWriter.WriteEndObject();
-        jsonWriter.Flush();
+        _jsonWriter.WriteNumber("id", id);
+        _jsonWriter.WriteEndObject();
+        _jsonWriter.Flush();
 
         OnMessageEnd();
     }
 
     private void OnMessageBegin()
     {
-        if (isBatch && jsonWriter.BytesCommitted + jsonWriter.BytesPending + bufferWriter.WrittenCount == 0)
-            jsonWriter.WriteStartArray();
+        if (_isBatch && _jsonWriter.BytesCommitted + _jsonWriter.BytesPending + _bufferWriter.WrittenCount == 0)
+            _jsonWriter.WriteStartArray();
     }
 
     private void OnMessageEnd()
     {
-        if (!isBatch)
+        if (!_isBatch)
             Flush();
     }
 
@@ -501,17 +501,17 @@ public partial class JsonRpcWriter : IDisposable
         switch (value)
         {
             case string s:
-                jsonWriter.WriteStringValue(s);
+                _jsonWriter.WriteStringValue(s);
                 break;
             case int i:
-                jsonWriter.WriteNumberValue(i);
+                _jsonWriter.WriteNumberValue(i);
                 break;
             case bool b:
-                jsonWriter.WriteBooleanValue(b);
+                _jsonWriter.WriteBooleanValue(b);
                 break;
             // TODO: Support the rest.
             default:
-                jsonWriter.WriteNullValue();
+                _jsonWriter.WriteNullValue();
                 break;
         }
     }
@@ -523,10 +523,10 @@ public partial class JsonRpcWriter : IDisposable
         {
             case KeyholeType.String:
                 // Must use jsonWriter to write this string with the proper json encoding.
-                jsonWriter.WriteStringValueSegment(keyhole.String, false);
+                _jsonWriter.WriteStringValueSegment(keyhole.String, false);
                 return;
             case KeyholeType.Boolean:
-                jsonWriter.WriteStringValueSegment(keyhole.Boolean ? "true" : "false", false);
+                _jsonWriter.WriteStringValueSegment(keyhole.Boolean ? "true" : "false", false);
                 return;
         }
 
@@ -534,57 +534,57 @@ public partial class JsonRpcWriter : IDisposable
         // Flush the JSON writer and switch to the raw buffer writer.
         // Use IUtf8SpanFormattable.TryFormat() to write without allocating memory.
 
-        jsonWriter.Flush();
+        _jsonWriter.Flush();
         int length = 0;
         int sizeHint = 30;
         switch (keyhole.Type)
         {
             case KeyholeType.Integer:
-                while (!keyhole.Integer.TryFormat(bufferWriter.GetSpan(sizeHint), out length, keyhole.FormatModifier))
+                while (!keyhole.Integer.TryFormat(_bufferWriter.GetSpan(sizeHint), out length, keyhole.FormatModifier))
                     GrowSizeHint(ref sizeHint);
                 break;
             case KeyholeType.Long:
-                while (!keyhole.Long.TryFormat(bufferWriter.GetSpan(sizeHint), out length, keyhole.FormatModifier))
+                while (!keyhole.Long.TryFormat(_bufferWriter.GetSpan(sizeHint), out length, keyhole.FormatModifier))
                     GrowSizeHint(ref sizeHint);
                 break;
             case KeyholeType.Float:
-                while (!keyhole.Float.TryFormat(bufferWriter.GetSpan(sizeHint), out length, keyhole.FormatModifier))
+                while (!keyhole.Float.TryFormat(_bufferWriter.GetSpan(sizeHint), out length, keyhole.FormatModifier))
                     GrowSizeHint(ref sizeHint);
                 break;
             case KeyholeType.Double:
-                while (!keyhole.Double.TryFormat(bufferWriter.GetSpan(sizeHint), out length, keyhole.FormatModifier))
+                while (!keyhole.Double.TryFormat(_bufferWriter.GetSpan(sizeHint), out length, keyhole.FormatModifier))
                     GrowSizeHint(ref sizeHint);
                 break;
             case KeyholeType.Decimal:
-                while (!keyhole.Decimal.TryFormat(bufferWriter.GetSpan(sizeHint), out length, keyhole.FormatModifier))
+                while (!keyhole.Decimal.TryFormat(_bufferWriter.GetSpan(sizeHint), out length, keyhole.FormatModifier))
                     GrowSizeHint(ref sizeHint);
                 break;
             case KeyholeType.DateTime:
-                while (!keyhole.DateTime.TryFormat(bufferWriter.GetSpan(sizeHint), out length, keyhole.FormatModifier))
+                while (!keyhole.DateTime.TryFormat(_bufferWriter.GetSpan(sizeHint), out length, keyhole.FormatModifier))
                     GrowSizeHint(ref sizeHint);
                 break;
             case KeyholeType.DateOnly:
-                while (!keyhole.DateOnly.TryFormat(bufferWriter.GetSpan(sizeHint), out length, keyhole.FormatModifier))
+                while (!keyhole.DateOnly.TryFormat(_bufferWriter.GetSpan(sizeHint), out length, keyhole.FormatModifier))
                     GrowSizeHint(ref sizeHint);
                 break;
             case KeyholeType.TimeSpan:
-                while (!keyhole.TimeSpan.TryFormat(bufferWriter.GetSpan(sizeHint), out length, keyhole.FormatModifier))
+                while (!keyhole.TimeSpan.TryFormat(_bufferWriter.GetSpan(sizeHint), out length, keyhole.FormatModifier))
                     GrowSizeHint(ref sizeHint);
                 break;
             case KeyholeType.TimeOnly:
-                while (!keyhole.TimeOnly.TryFormat(bufferWriter.GetSpan(sizeHint), out length, keyhole.FormatModifier))
+                while (!keyhole.TimeOnly.TryFormat(_bufferWriter.GetSpan(sizeHint), out length, keyhole.FormatModifier))
                     GrowSizeHint(ref sizeHint);
                 break;
             case KeyholeType.Color:
-                while (!keyhole.Color.TryFormat(bufferWriter.GetSpan(sizeHint), out length, keyhole.FormatModifier))
+                while (!keyhole.Color.TryFormat(_bufferWriter.GetSpan(sizeHint), out length, keyhole.FormatModifier))
                     GrowSizeHint(ref sizeHint);
                 break;
             case KeyholeType.Uri:
                 // TODO: Fix memory allocation and support format string?
-                bufferWriter.Write(keyhole.Uri!.ToString());
+                _bufferWriter.Write(keyhole.Uri!.ToString());
                 break;
         }
-        bufferWriter.Advance(length);
+        _bufferWriter.Advance(length);
     }
 
     private static void GrowSizeHint(ref int sizeHint)
@@ -596,6 +596,6 @@ public partial class JsonRpcWriter : IDisposable
 
     public void Dispose()
     {
-        jsonWriter.Dispose();
+        _jsonWriter.Dispose();
     }
 }

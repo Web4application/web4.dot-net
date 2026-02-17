@@ -7,22 +7,22 @@ namespace Web4.Keyholes.Composers;
 
 public abstract class BaseKeyComposer : BaseComposer
 {
-    protected readonly KeyCursor keyCursor = new();
+    private bool _isHtmlPrepared = true;
+    protected readonly KeyCursor _keyCursor = new();
     public byte[] Key { get; private set; } = [];
-    private bool isHtmlPrepared = true;
 
     public override void Grow(int literalLength, int keyholeCount)
     {
-        isHtmlPrepared = false;
+        _isHtmlPrepared = false;
         base.Grow(literalLength, keyholeCount);
     }
 
     public virtual bool OnTemplateBegin(ref Html html, ref string markup) => true;
     public virtual bool OnTemplateEnd(ref Html html) => true;
 
-    public override bool OnMarkup(ref Html parent, ref string literal, int relativeOrder = -1) => (isHtmlPrepared, parent.Type) switch {
-        (false, HtmlType.Template) => isHtmlPrepared = OnTemplateBegin(ref parent, ref literal),
-        (false, HtmlType.Default) => isHtmlPrepared = OnHtmlBegin(ref parent, relativeOrder),
+    public override bool OnMarkup(ref Html parent, ref string literal, int relativeOrder = -1) => (_isHtmlPrepared, parent.Type) switch {
+        (false, HtmlType.Template) => _isHtmlPrepared = OnTemplateBegin(ref parent, ref literal),
+        (false, HtmlType.Default) => _isHtmlPrepared = OnHtmlBegin(ref parent, relativeOrder),
         _ => true,
     };
 
@@ -42,8 +42,8 @@ public abstract class BaseKeyComposer : BaseComposer
 
     public virtual bool OnHtmlBegin(ref Html html, int relativeOrder = -1)
     {
-        Key = keyCursor.MoveNext();
-        keyCursor.MoveDown();
+        Key = _keyCursor.MoveNext();
+        _keyCursor.MoveDown();
         return true;
     }
 
@@ -56,14 +56,14 @@ public abstract class BaseKeyComposer : BaseComposer
 
     public virtual bool OnHtmlEnd(ref Html parent, scoped Html html, int relativeOrder = -1, string? transition = null, string? expression = null)
     {
-        Key = keyCursor.MoveUp();
+        Key = _keyCursor.MoveUp();
         return true;
     }
 
     public virtual bool OnIteratorBegin(ref Html parent, ref Html htmls, string? transition = null, string? expression = null)
     {
-        Key = keyCursor.MoveNext();
-        keyCursor.MoveDown();
+        Key = _keyCursor.MoveNext();
+        _keyCursor.MoveDown();
         return true;
     }
 
@@ -74,7 +74,7 @@ public abstract class BaseKeyComposer : BaseComposer
 
     public virtual bool OnIteratorEnd(ref Html parent, ref Html htmls, string? transition = null, string? expression = null)
     {
-        Key = keyCursor.MoveUp();
+        Key = _keyCursor.MoveUp();
         return true;
     }
 
@@ -85,21 +85,21 @@ public abstract class BaseKeyComposer : BaseComposer
 
     public override void Reset()
     {
-        isHtmlPrepared = true;
-        keyCursor.Reset();
+        _isHtmlPrepared = true;
+        _keyCursor.Reset();
         base.Reset();
     }
 
     protected virtual bool OnKeyhole(ref Html parent)
     {
         var discard = string.Empty;
-        _ = (isHtmlPrepared, parent.Type) switch {
-            (false, HtmlType.Template) => isHtmlPrepared = OnTemplateBegin(ref parent, ref discard),
-            (false, HtmlType.Default) => isHtmlPrepared = OnHtmlBegin(ref parent),
+        _ = (_isHtmlPrepared, parent.Type) switch {
+            (false, HtmlType.Template) => _isHtmlPrepared = OnTemplateBegin(ref parent, ref discard),
+            (false, HtmlType.Default) => _isHtmlPrepared = OnHtmlBegin(ref parent),
             _ => true,
         };
 
-        Key = keyCursor.MoveNext();
+        Key = _keyCursor.MoveNext();
         return true;
     }
 }

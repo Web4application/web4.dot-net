@@ -2,25 +2,25 @@ namespace Web4.Keyholes;
 
 class KeyCache
 {
-    private readonly List<KeyCache?> children = [];
+    private readonly List<KeyCache?> _children = [];
     public static KeyCache Root { get; } = new KeyCache(null!, []);
     public byte[] Key { get; private set; }
     public KeyCache Parent { get; private set; }
 
     public byte[]? this[int index]
     {
-        get => index < children.Count ? children[index]?.Key : null;
+        get => index < _children.Count ? _children[index]?.Key : null;
         set
         {
             ArgumentNullException.ThrowIfNull(value);
 
-            while (children.Count < index)
-                children.Add(null);
+            while (_children.Count < index)
+                _children.Add(null);
 
-            if (index == children.Count)
-                children.Add(new KeyCache(this, value));
+            if (index == _children.Count)
+                _children.Add(new KeyCache(this, value));
             else
-                children[index] = new KeyCache(this, value);
+                _children[index] = new KeyCache(this, value);
         }
     }
 
@@ -32,6 +32,6 @@ class KeyCache
 
     public KeyCache NextGeneration(int index)
     {
-        return children[index] ??= new KeyCache(this, Parent.Key);
+        return _children[index] ??= new KeyCache(this, Parent.Key);
     }
 }
