@@ -3,7 +3,7 @@ using System.Drawing;
 using Web4.Dom.EventListeners;
 using Web4.Keyholes.Composers;
 using Web4.Dom;
-using MicroHtml;
+using HtmlString;
 using Web4.Keyholes.Utilities;
 
 namespace Web4.Keyholes;

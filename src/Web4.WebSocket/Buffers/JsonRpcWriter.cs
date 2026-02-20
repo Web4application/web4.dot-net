@@ -2,7 +2,7 @@ using System.Buffers;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.Channels;
-using MicroHtml;
+using HtmlString;
 using Web4.Keyholes;
 
 namespace Web4.WebSocket.Buffers;

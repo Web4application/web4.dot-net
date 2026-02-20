@@ -7,8 +7,8 @@ using Microsoft.Extensions.Logging;
 using Web4.Keyholes;
 using System.Diagnostics;
 using System.IO.Pipelines;
-using MicroHtml;
-using MicroHtml.Composers;
+using HtmlString;
+using HtmlString.Composers;
 using Web4.Keyholes.Assets;
 
 namespace Web4.WebSocket;

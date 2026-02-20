@@ -1,5 +1,5 @@
 using System.Drawing;
-using MicroHtml;
+using HtmlString;
 using Web4.WebSocket;
 using Web4.Dom;
 

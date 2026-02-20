@@ -1,6 +1,6 @@
 using System.Drawing;
 
-namespace MicroHtml;
+namespace HtmlString;
 
 public static partial class Extensions
 {

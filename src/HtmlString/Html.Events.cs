@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 using Web4.Dom;
 using Web4.Dom.Events.Subsets;
 
-namespace MicroHtml;
+namespace HtmlString;
 
 public ref partial struct Html
 {

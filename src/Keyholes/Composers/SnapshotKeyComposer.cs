@@ -1,7 +1,7 @@
 using System.Buffers;
 using System.Drawing;
 using System.Runtime.CompilerServices;
-using MicroHtml;
+using HtmlString;
 using Web4.Dom;
 
 namespace Web4.Keyholes.Composers;

@@ -1,8 +1,8 @@
 using System.Buffers;
 using System.Drawing;
 using System.Text;
-using MicroHtml;
-using MicroHtml.Composers;
+using HtmlString;
+using HtmlString.Composers;
 using Web4.Dom;
 using Web4.Keyholes.Utilities;
 

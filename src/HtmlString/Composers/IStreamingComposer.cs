@@ -1,6 +1,6 @@
 using System.Buffers;
 
-namespace MicroHtml.Composers;
+namespace HtmlString.Composers;
 
 public interface IStreamingComposer
 {

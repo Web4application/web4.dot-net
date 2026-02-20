@@ -1,10 +1,10 @@
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using MicroHtml.Composers;
+using HtmlString.Composers;
 using Web4.Dom;
 
-namespace MicroHtml;
+namespace HtmlString;
 
 public enum HtmlType { Default, Template, Wrapper }
 

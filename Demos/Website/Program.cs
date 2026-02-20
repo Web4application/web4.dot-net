@@ -1,11 +1,11 @@
-global using MicroHtml;
+global using HtmlString;
 global using Web4;
 global using Web4.WebSocket;
 global using Web4.Dom;
 global using Web4.Xtml;
 global using System.Buffers;
 using System.Drawing;
-using MicroHtml.Composers;
+using HtmlString.Composers;
 using System.Text;
 Action<string> Log = Console.WriteLine;
 

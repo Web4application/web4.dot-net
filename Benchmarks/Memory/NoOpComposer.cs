@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
-using MicroHtml;
-using MicroHtml.Composers;
+using HtmlString;
+using HtmlString.Composers;
 
 namespace Web4.Composers;
 

@@ -1,6 +1,6 @@
 using System.Text;
 using Web4.Dom;
-using MicroHtml;
+using HtmlString;
 
 namespace Web4.Keyholes.Utilities;
 

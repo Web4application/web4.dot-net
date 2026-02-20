@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
-using MicroHtml;
-using MicroHtml.Composers;
+using HtmlString;
+using HtmlString.Composers;
 using Microsoft.AspNetCore.Http;
 
 namespace Web4.Keyholes.Composers;

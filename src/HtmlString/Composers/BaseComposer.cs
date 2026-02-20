@@ -1,7 +1,7 @@
 using System.Drawing;
 using Web4.Dom;
 
-namespace MicroHtml.Composers;
+namespace HtmlString.Composers;
 
 public abstract class BaseComposer
 {

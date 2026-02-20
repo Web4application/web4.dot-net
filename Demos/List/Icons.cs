@@ -1,4 +1,4 @@
-using MicroHtml;
+using HtmlString;
 
 static class Icons
 {
