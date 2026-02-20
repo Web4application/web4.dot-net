@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.Text;
 
 #pragma warning disable RS1035 // Do not use banned APIs for analyzers
 
-namespace Web4.Xtml
+namespace Xtml
 {
     [Generator]
     public class LiveGenerator : ISourceGenerator
