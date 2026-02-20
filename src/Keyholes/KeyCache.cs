@@ -1,4 +1,4 @@
-namespace Web4.Keyholes;
+namespace Keyholes;
 
 class KeyCache
 {

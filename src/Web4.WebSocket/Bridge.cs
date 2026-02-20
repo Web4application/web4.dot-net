@@ -6,12 +6,12 @@ using System.Text;
 using System.Threading.Channels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Web4.Keyholes.Composers;
+using Keyholes.Composers;
 using Web4.Dom;
 using Web4.WebSocket.Buffers;
-using Web4.Keyholes;
+using Keyholes;
 using Web4.WebSocket.Dom;
-using Web4.Keyholes.Utilities;
+using Keyholes.Utilities;
 
 namespace Web4.WebSocket;
 

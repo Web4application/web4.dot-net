@@ -2,7 +2,7 @@ using Web4.Dom.EventListeners;
 using System.Drawing;
 using Web4.Dom;
 
-namespace Web4.Keyholes;
+namespace Keyholes;
 
 public class DocumentBuilder(WindowBuilder window) :
     IDocumentEventListeners,

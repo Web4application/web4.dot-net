@@ -1,15 +1,15 @@
-using Web4.Keyholes.Composers;
+using Keyholes.Composers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Web4.Keyholes;
+using Keyholes;
 using System.Diagnostics;
 using System.IO.Pipelines;
 using HtmlString;
 using HtmlString.Composers;
-using Web4.Keyholes.Assets;
+using Keyholes.Assets;
 
 namespace Web4.WebSocket;
 

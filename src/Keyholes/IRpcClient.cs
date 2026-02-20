@@ -1,6 +1,6 @@
 using Web4.Dom;
 
-namespace Web4.Keyholes;
+namespace Keyholes;
 
 public interface IRpcClient
 {

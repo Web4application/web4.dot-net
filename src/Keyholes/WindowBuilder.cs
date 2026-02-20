@@ -1,12 +1,12 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using Web4.Dom.EventListeners;
-using Web4.Keyholes.Composers;
+using Keyholes.Composers;
 using Web4.Dom;
 using HtmlString;
-using Web4.Keyholes.Utilities;
+using Keyholes.Utilities;
 
-namespace Web4.Keyholes;
+namespace Keyholes;
 
 public class WindowBuilder : 
     IWindowEventListeners,

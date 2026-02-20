@@ -1,7 +1,7 @@
 using System;
 using System.Text;
 
-namespace Web4.Keyholes.Assets;
+namespace Keyholes.Assets;
 
 public static class AssetsHelper
 {

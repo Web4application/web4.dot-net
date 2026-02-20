@@ -1,6 +1,6 @@
-using Web4.Keyholes.Utilities;
+using Keyholes.Utilities;
 
-namespace Web4.Keyholes;
+namespace Keyholes;
 
 public ref struct Reconciler(IRpcClient mutator, Keyhole[] oldBuffer, Keyhole[] newBuffer)
 {

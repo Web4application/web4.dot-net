@@ -3,7 +3,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.Channels;
 using HtmlString;
-using Web4.Keyholes;
+using Keyholes;
 
 namespace Web4.WebSocket.Buffers;
 

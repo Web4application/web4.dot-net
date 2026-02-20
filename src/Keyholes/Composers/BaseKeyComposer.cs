@@ -3,7 +3,7 @@ using HtmlString;
 using HtmlString.Composers;
 using Web4.Dom;
 
-namespace Web4.Keyholes.Composers;
+namespace Keyholes.Composers;
 
 public abstract class BaseKeyComposer : BaseComposer
 {

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Routing;
 using HtmlString;
-using Web4.Keyholes.Composers;
+using Keyholes.Composers;
 
 namespace Web4.WebSocket;
 

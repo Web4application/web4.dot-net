@@ -6,8 +6,8 @@ using BenchmarkDotNet.Running;
 using HtmlString;
 using HtmlString.Composers;
 using Web4.Composers;
-using Web4.Keyholes;
-using Web4.Keyholes.Composers;
+using Keyholes;
+using Keyholes.Composers;
 
 BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
 

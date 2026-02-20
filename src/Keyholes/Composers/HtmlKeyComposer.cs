@@ -4,9 +4,9 @@ using System.Text;
 using HtmlString;
 using HtmlString.Composers;
 using Web4.Dom;
-using Web4.Keyholes.Utilities;
+using Keyholes.Utilities;
 
-namespace Web4.Keyholes.Composers;
+namespace Keyholes.Composers;
 
 public class HtmlKeyComposer(IBufferWriter<byte> writer, WindowBuilder window)
     : BaseKeyComposer, IStreamingComposer

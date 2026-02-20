@@ -2,7 +2,7 @@ using System.Text;
 using Web4.Dom;
 using HtmlString;
 
-namespace Web4.Keyholes.Utilities;
+namespace Keyholes.Utilities;
 
 // TODO: Clean this up.  Many, many memory allocations.
 

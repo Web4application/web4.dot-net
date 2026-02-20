@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using HtmlString;
 using Web4.Dom;
 
-namespace Web4.Keyholes.Composers;
+namespace Keyholes.Composers;
 
 public class FindKeyComposer : BaseKeyComposer
 {
