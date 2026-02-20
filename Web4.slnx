@@ -5,22 +5,22 @@
     <Platform Name="x86" />
   </Configurations>
   <Folder Name="/benchmarks/">
-    <Project Path="Benchmarks/Memory/Memory.csproj" />
-    <Project Path="Benchmarks/Rendering/Rendering.csproj" />
+    <Project Path="benchmarks/Memory/Memory.csproj" />
+    <Project Path="benchmarks/Rendering/Rendering.csproj" />
   </Folder>
   <Folder Name="/demos/">
-    <Project Path="Demos/Clean/Clean.csproj" />
-    <Project Path="Demos/List/List.csproj" />
-    <Project Path="Demos/Wasm/Wasm.csproj" />
-    <Project Path="Demos/Website/Website.csproj" />
+    <Project Path="demos/Clean/Clean.csproj" />
+    <Project Path="demos/List/List.csproj" />
+    <Project Path="demos/Wasm/Wasm.csproj" />
+    <Project Path="demos/Website/Website.csproj" />
   </Folder>
   <Folder Name="/src/">
-    <Project Path="MicroHtml/HtmlString.csproj" />
-    <Project Path="Web4.Dom/Web4.Dom.csproj" />
-    <Project Path="Web4.Keyholes/Keyholes.csproj" />
-    <Project Path="Web4.WebAssembly/Web4.WebAssembly.csproj" />
-    <Project Path="Web4.WebSocket/Web4.WebSocket.csproj" />
-    <Project Path="Web4.Xtml/Xtml.csproj" />
+    <Project Path="src/HtmlString/HtmlString.csproj" />
+    <Project Path="src/Keyholes/Keyholes.csproj" />
+    <Project Path="src/Web4.Dom/Web4.Dom.csproj" />
+    <Project Path="src/Web4.WebAssembly/Web4.WebAssembly.csproj" />
+    <Project Path="src/Web4.WebSocket/Web4.WebSocket.csproj" />
+    <Project Path="src/Xtml/Xtml.csproj" />
   </Folder>
   <Folder Name="/tests/" />
 </Solution>
