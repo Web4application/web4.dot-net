@@ -4,20 +4,23 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Folder Name="/Benchmarks/">
+  <Folder Name="/benchmarks/">
     <Project Path="Benchmarks/Memory/Memory.csproj" />
     <Project Path="Benchmarks/Rendering/Rendering.csproj" />
   </Folder>
-  <Folder Name="/Demos/">
+  <Folder Name="/demos/">
     <Project Path="Demos/Clean/Clean.csproj" />
     <Project Path="Demos/List/List.csproj" />
     <Project Path="Demos/Wasm/Wasm.csproj" />
     <Project Path="Demos/Website/Website.csproj" />
   </Folder>
-  <Project Path="MicroHtml/MicroHtml.csproj" />
-  <Project Path="Web4.Dom/Web4.Dom.csproj" />
-  <Project Path="Web4.Keyholes/Web4.Keyholes.csproj" />
-  <Project Path="Web4.WebAssembly/Web4.WebAssembly.csproj" />
-  <Project Path="Web4.WebSocket/Web4.WebSocket.csproj" />
-  <Project Path="Web4.Xtml/Web4.Xtml.csproj" />
+  <Folder Name="/src/">
+    <Project Path="MicroHtml/HtmlString.csproj" />
+    <Project Path="Web4.Dom/Web4.Dom.csproj" />
+    <Project Path="Web4.Keyholes/Keyholes.csproj" />
+    <Project Path="Web4.WebAssembly/Web4.WebAssembly.csproj" />
+    <Project Path="Web4.WebSocket/Web4.WebSocket.csproj" />
+    <Project Path="Web4.Xtml/Xtml.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
 </Solution>

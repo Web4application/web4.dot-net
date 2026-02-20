@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../MicroHtml/MicroHtml.csproj" />
+    <ProjectReference Include="../MicroHtml/HtmlString.csproj" />
     <EmbeddedResource Include="Assets/web4.js" />
     <EmbeddedResource Include="Assets/web4.css" />
   </ItemGroup>
