@@ -4,10 +4,29 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Version>0.0.1</Version>
+    <Authors>Rylan Barnes</Authors>
+    <Company>Web4 Foundation</Company>
+    <Product>HtmlString</Product>
+    <Description>HtmlString is high-performance HTML templating using C#'s custom string interpolation.</Description>
+    <Copyright>Copyright © Rylan Barnes 2026</Copyright>
+    <Summary>HtmlString is high-performance HTML templating using C#'s custom string interpolation.</Summary>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <Title>HtmlString</Title>
+    <PackageId>HtmlStrings</PackageId>
+    <PackageVersion>0.0.1</PackageVersion>
+    <PackageTags>html;templating;htmlstring;interpolation</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <!-- <PackageIcon>packageIcon.png</PackageIcon> -->
+    <PackageProjectUrl>https://web4.dev/html-string</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/web4foundation/web4-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="../Web4.Dom/Web4.Dom.csproj" />
+    <None Include="README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
 </Project>
