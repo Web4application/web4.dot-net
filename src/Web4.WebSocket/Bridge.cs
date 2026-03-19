@@ -167,6 +167,8 @@ public partial class Bridge(HttpContext httpContext, WindowBuilder windowBuilder
     {
         // TODO: I don't like how it awaits Task.Delay on the first run.
 
+        // TODO: Verify that Stopwatch isn't allocating due to inlining, escape analysis, and stack allocation.
+        // https://github.com/dotnet/runtime/pull/111834
         var lastUpdate = Stopwatch.StartNew();
         while (!cancel.IsCancellationRequested)
         {
