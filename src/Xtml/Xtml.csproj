@@ -7,7 +7,7 @@
     <IsRoslynComponent>true</IsRoslynComponent>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <Version>0.0.1</Version>
+    <Version>0.0.2</Version>
     <Authors>Rylan Barnes</Authors>
     <Company>Web4 Foundation</Company>
     <Product>XTML</Product>
@@ -17,10 +17,10 @@
     <NeutralLanguage>en-US</NeutralLanguage>
     <Title>XTML</Title>
     <PackageId>XTML</PackageId>
-    <PackageVersion>0.0.1</PackageVersion>
+    <PackageVersion>0.0.2</PackageVersion>
     <PackageTags>html;xtml</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <!-- <PackageIcon>packageIcon.png</PackageIcon> -->
+    <PackageIcon>package-icon.png</PackageIcon>
     <PackageProjectUrl>https://web4.dev/xtml</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/web4foundation/web4-dotnet</RepositoryUrl>
@@ -31,6 +31,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.7.0" />
     <None Include="README.md" Pack="true" PackagePath="" />
+    <None Include="package-icon.png" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 </Project>
