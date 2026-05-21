@@ -1,6 +1,6 @@
 <Solution>
   <Configurations>
-    <Platform Name="Any CPU" />
+    <Platform Name="web4lib" />
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
@@ -14,7 +14,7 @@
     <Project Path="demos/Wasm/Wasm.csproj" />
     <Project Path="demos/Website/Website.csproj" />
   </Folder>
-  <Folder Name="/src/">
+  <Folder Name="/rsc/">
     <Project Path="src/HtmlString/HtmlString.csproj" />
     <Project Path="src/Keyholes/Keyholes.csproj" />
     <Project Path="src/Web4.Dom/Web4.Dom.csproj" />
